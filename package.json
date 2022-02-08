@@ -1,0 +1,22 @@
+{
+  "name": "721-scripts",
+  "version": "1.0.0",
+  "description": "",
+  "main": "check-owner.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/721am/721-scripts.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/721am/721-scripts/issues"
+  },
+  "homepage": "https://github.com/721am/721-scripts#readme",
+  "dependencies": {
+    "ethers": "^5.5.4"
+  }
+}
