@@ -1,0 +1,34 @@
+<html>
+  <head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.5.4/ethers.umd.min.js" integrity="sha512-xmbPx0riylir51GhTZCFd20yS7NYZNpfDTbEWBjDRzs+UaGb2RyjtASTVtF2ydQWp3xkso9j4sJj39PdSH8/EA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <title>signer</title>
+    <script>
+    async function sign() {
+      await window.ethereum.enable();
+      const eth = new ethers.providers.Web3Provider(window.ethereum);
+      const signer = await eth.getSigner();
+      const address = await signer.getAddress();
+      const msg = document.getElementById('message-input').value;
+      const sig = await signer.signMessage(msg);
+      document.getElementById("message-output").innerText = msg;
+      document.getElementById("signer-output").innerText = address;
+      document.getElementById("signature-output").innerText = sig;
+    }
+    </script>
+  </head>
+  <body>
+    <h1>input</h1>
+    <textarea id="message-input"></textarea>
+    <br />
+    <br />
+    <button onClick="sign()">sign</button>
+    <hr />
+    <h1>output</h1>
+    <h2>message</h2>
+    <pre id="message-output"></pre>
+    <h2>signer</h2>
+    <pre id="signer-output"></pre>
+    <h2>signature</h2>
+    <pre id="signature-output"></pre>
+  </body>
+</html>
