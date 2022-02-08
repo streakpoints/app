@@ -18,22 +18,62 @@
       document.getElementById('form').submit();
     }
     </script>
+    <style>
+      input, textarea, button, body {
+        font-family: Helvetica;
+        font-size: 1em;
+      }
+
+      input, textarea {
+        border-radius: 12px;
+        padding: .5em;
+        border: 1px solid #ccc;
+      }
+      button {
+        cursor:  pointer;
+        font-size: 1em;
+        padding: .5em 1em;
+        border: none;
+        background-color: #3399FF;
+        color: white;
+        border-radius: 12px;
+        font-weight: bold;
+      }
+      body {
+        max-width: 600px;
+        padding: 1em;
+        margin: 0 auto;
+      }
+    </style>
   </head>
   <body>
-    <h1>input</h1>
-    <textarea id="message-input" placeholder="message"></textarea>
+    <div id="notifs" style="text-align: center"></div>
+    <% if (showAuth) { %>
+    <div style="text-align: right">
+      <button onclick="window.location.href = '/auth/twitter/init'">add twitter</button>
+    </div>
+    <% } %>
+    <h1 style="text-align: center">🎙</h1>
+    <textarea id="message-input" placeholder="message" style="width: 100%; height: 4em"></textarea>
     <br />
     <br />
     ZORB <input id="token-input" placeholder="token ID"></input>
     <br />
     <br />
-    <button onClick="sign()">sign</button>
-    <hr />
+    <button onClick="sign()">🔏 PUBLISH</button>
     <form id="form" action="/" method="POST">
       <input type="hidden" name="tokenID" id="token-output" />
       <input type="hidden" name="message" id="message-output" />
       <input type="hidden" name="signer" id="signer-output" />
       <input type="hidden" name="signature" id="signature-output" />
     </form>
+    <script>
+      window.addEventListener('DOMContentLoaded', function() {
+        const tweetID = window.location.href.split('tweetID=');
+        if (tweetID.length > 1) {
+          document.getElementById('notifs').innerHTML = '<a href="https://twitter.com/jack/status/' + tweetID[1] + '">View Tweet</a>';
+        }
+      });
+    </script>
   </body>
 </html>
