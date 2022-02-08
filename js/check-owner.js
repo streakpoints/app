@@ -17,21 +17,17 @@ function getContract(address, provider) {
     return new ethers.Contract(address, abi, provider);
 }
 
-
-(async () => {
+module.exports = async function(tokenID, message, signer, signature) {
     const provider = getProvider();
-    // const baContract = getContract(TOKENS.BoredApes, provider);
-    // const BAOwner = await baContract.ownerOf(1);
-    // console.log(BAOwner);
-
-    // const cpContract = getContract(TOKENS.CryptoPunks, provider);
-    // const CPOwner = await cpContract.punkIndexToAddress(1);
-    // console.log(CPOwner);
-
-
+    const recoveredSigner = ethers.utils.verifyMessage(message, signature);
+    if (recoveredSigner != signer) {
+        throw new Error('invalid signature');
+    }
     const zContract = getContract(TOKENS.Zorb, provider);
-    const zOwnerA = await zContract.ownerOf('25371');
-    const zOwnerB = await zContract.ownerOf('3466');
-    console.log(zOwnerA, zOwnerB);
-})();
+    const owner = await zContract.ownerOf(tokenID);
+    if (owner != signer) {
+        throw new Error('not owner');
+    }
+    return true;
+};
 

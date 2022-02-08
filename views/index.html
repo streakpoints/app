@@ -1,0 +1,39 @@
+<html>
+  <head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.5.4/ethers.umd.min.js" integrity="sha512-xmbPx0riylir51GhTZCFd20yS7NYZNpfDTbEWBjDRzs+UaGb2RyjtASTVtF2ydQWp3xkso9j4sJj39PdSH8/EA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <title>signer</title>
+    <script>
+    async function sign() {
+      await window.ethereum.enable();
+      const eth = new ethers.providers.Web3Provider(window.ethereum);
+      const signer = await eth.getSigner();
+      const address = await signer.getAddress();
+      const tokenID = document.getElementById('token-input').value;
+      const msg = document.getElementById('message-input').value;
+      const sig = await signer.signMessage(msg);
+      document.getElementById("token-output").value = tokenID;
+      document.getElementById("message-output").value = msg;
+      document.getElementById("signer-output").value = address;
+      document.getElementById("signature-output").value = sig;
+      document.getElementById('form').submit();
+    }
+    </script>
+  </head>
+  <body>
+    <h1>input</h1>
+    <textarea id="message-input" placeholder="message"></textarea>
+    <br />
+    <br />
+    ZORB <input id="token-input" placeholder="token ID"></input>
+    <br />
+    <br />
+    <button onClick="sign()">sign</button>
+    <hr />
+    <form id="form" action="/" method="POST">
+      <input type="hidden" name="tokenID" id="token-output" />
+      <input type="hidden" name="message" id="message-output" />
+      <input type="hidden" name="signer" id="signer-output" />
+      <input type="hidden" name="signature" id="signature-output" />
+    </form>
+  </body>
+</html>

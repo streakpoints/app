@@ -4,7 +4,7 @@
   "description": "",
   "main": "check-owner.js",
   "scripts": {
-    "sign": "sh ./serve.sh",
+    "start": "node app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -18,6 +18,9 @@
   },
   "homepage": "https://github.com/721am/721-scripts#readme",
   "dependencies": {
-    "ethers": "^5.5.4"
+    "body-parser": "^1.19.1",
+    "ejs": "^3.1.6",
+    "ethers": "^5.5.4",
+    "express": "^4.17.2"
   }
 }
