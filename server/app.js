@@ -64,9 +64,12 @@ function repeat(template, occurences) {
   return `,${template}`.repeat(occurences).slice(1);
 }
 
-const contentSecurityPolicy = helmet.contentSecurityPolicy.getDefaultDirectives();
+const directives = helmet.contentSecurityPolicy.getDefaultDirectives();
+directives['default-src'] = [ "'self'", "api.opensea.io" ];
 app.use(helmet({
-  contentSecurityPolicy
+  contentSecurityPolicy: {
+    directives
+  }
 }));
 
 app.use(cors({
@@ -540,20 +543,7 @@ app.post('/-/api/tweet-token', async (req, res) => {
     });
 
     /**
-     * 7. Submit transaction to the blockchain
-     */
-    const txnID = await blockchain.mint(
-      process.env.BICONOMY_API_KEY,
-      messageMemo,
-      messageRoyaltyRateInteger,
-      messageRoyaltyRateDecimal,
-      messageRoyaltyOwner,
-      messageTokenURI,
-      messageSignature
-    );
-
-    /**
-     * 8. Save tweet_token to database
+     * 7. Save tweet_token to database
      */
     await pool.query(
       `
@@ -568,9 +558,8 @@ app.post('/-/api/tweet-token', async (req, res) => {
         token_royalty,
         token_address,
         token_signer,
-        token_signature,
-        token_txid
-      ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+        token_signature
+      ) VALUES (?,?,?,?,?,?,?,?,?,?,?)
       `,
       [
         tweet.data.id,
@@ -583,12 +572,38 @@ app.post('/-/api/tweet-token', async (req, res) => {
         royaltyRate,
         messageRoyaltyOwner,
         messageSigner,
-        messageSignature,
-        txnID
+        messageSignature
       ]
     );
 
     jsonResponse(res, null, tweet.data.id);
+
+    try {
+      /**
+       * 8. Submit transaction to the blockchain
+       */
+      const txnID = await blockchain.mint(
+        process.env.BICONOMY_API_KEY,
+        messageMemo,
+        messageRoyaltyRateInteger,
+        messageRoyaltyRateDecimal,
+        messageRoyaltyOwner,
+        messageTokenURI,
+        messageSignature
+      );
+      await pool.query(
+        `
+        UPDATE tweet_token
+        SET token_txid = ?
+        WHERE tweet_id = ?
+        `,
+        [ txnID, tweet.data.id]
+      );
+    }
+    catch (e) {
+      console.log('Error Minting: ' + e.message);
+    }
+
   }
   catch (e) {
     console.log(e.message);
