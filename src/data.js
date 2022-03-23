@@ -23,13 +23,33 @@ export const getRules = async params => {
 }
 
 export const archive = async params => {
-  const response = await axios.post(`${BASE_URL}/tweet-token/uri`, params);
-  return response.data.results;
+  try {
+    const response = await axios.post(`${BASE_URL}/tweet-token/uri`, params);
+    return response.data.results;
+  }
+  catch (e) {
+    if (e.response.data && e.response.data.errors) {
+      throw new Error(e.response.data.errors);
+    }
+    else {
+      throw e;
+    }
+  }
 }
 
 export const tweet = async params => {
-  const response = await axios.post(`${BASE_URL}/tweet-token`, params);
-  return response.data.results;
+  try {
+    const response = await axios.post(`${BASE_URL}/tweet-token`, params);
+    return response.data.results;
+  }
+  catch (e) {
+    if (e.response.data && e.response.data.errors) {
+      throw new Error(e.response.data.errors);
+    }
+    else {
+      throw e;
+    }
+  }
 }
 
 export const save = async params => {

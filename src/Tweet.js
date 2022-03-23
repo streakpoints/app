@@ -79,15 +79,6 @@ function Tweet(props) {
         + '\n\nToken Metadata\n' + tokenURI
       );
 
-      console.log(
-        tweetMessage
-        + '\n\n-------'
-        + '\n\nRoyalty Rate\n' + royaltyRate + '%'
-        + '\n\nRoyalty Owner\n' + royaltyOwner
-        + '\n\nToken Metadata\n' + tokenURI
-      );
-      console.log(signature);
-
       setProgress('Tweeting...');
 
       const tweetID = await data.tweet({
