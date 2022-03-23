@@ -349,8 +349,8 @@ const capturePost = (url, responseType) => {
 
 app.post('/-/api/tweet-token/uri', async (req, res) => {
   const {
-    tokenID,
     networkID,
+    authorizedTokenID,
     authorizedAddress,
     twitterAccountID,
     tweetMessage
@@ -369,8 +369,8 @@ app.post('/-/api/tweet-token/uri', async (req, res) => {
     }
 
     // 2. Prepare the metadata
-    const broadcastIdentifier = await blockchain.getBroadcastIdentifier(authorizedAddress, tokenID, networkID);
-    const tokenName = `${broadcastIdentifier} ${new Date().toISOString().replace('T', '').split('.')[0]}`;
+    const broadcastIdentifier = await blockchain.getBroadcastIdentifier(authorizedAddress, authorizedTokenID, networkID);
+    const tokenName = `${broadcastIdentifier} ${new Date().toISOString().replace('T', ' ').split('.')[0]}`;
     const tokenFrame = `https://embed-renderer.s3.us-west-2.amazonaws.com/721.html?${encodeURIComponent(tweetMessage)}`;
 
     // 3. Capture the image of the post, store on IPFS
@@ -453,13 +453,30 @@ app.post('/-/api/tweet-token', async (req, res) => {
       [ twitterAccountID, authorizedAddress ]
     );
 
-    if (accountRules.filter(r => r.token_id == authorizedTokenID && !r.is_allowed).length > 0) {
-      // Token blocked
-      throw new Error('Token Not Authorized');
+    if (accountRules.length == 0) {
+      throw new Error('Address or contract not authorized');
     }
 
+    const NFTGateRules = accountRules.filter(r => r.token_id != null);
+    if (NFTGateRules.length > 0) {
+      if (!authorizedTokenID || authorizedTokenID.length == 0) {
+        throw new Error('Invalid Token ID');
+      }
+      const allowMatches = NFTGateRules.filter(r => (r.is_allowed && r.token_id == authorizedTokenID));
+      const banMatches = NFTGateRules.filter(r => (!r.is_allowed && r.token_id == authorizedTokenID));
+      const allowAll = NFTGateRules.filter(r => (r.is_allowed && r.token_id == '*')).length > 0;
+      if (banMatches.length > 0) {
+        // Token blocked. You can block if you "allow all" by default
+        throw new Error('Token Blocked');
+      }
+      if (!allowAll && allowMatches.length > 0) {
+        throw new Error('Token Not Authorized');
+      }
+    }
+
+
     if (accountRules.filter(r => (r.token_id == '*' || !r.token_id) && r.is_allowed).length == 0) {
-      // Token collection not blanket-allowed
+      // Token collection and/or Address have not been blanket approved
       if (accountRules.filter(r => r.token_id == authorizedTokenID && r.is_allowed).length == 0) {
         // Exact token not allowed match
         throw new Error('Token Not Authorized');

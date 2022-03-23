@@ -60,8 +60,8 @@ function Tweet(props) {
       const signerAddress = await signer.getAddress();
 
       const tokenURI = await data.archive({
-        tokenID,
         networkID,
+        authorizedTokenID: tokenID,
         authorizedAddress: tokenContract ? tokenContract : signerAddress,
         twitterAccountID: userID,
         tweetMessage
