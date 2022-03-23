@@ -105,7 +105,7 @@ app.use((req, res, next) => {
 passport.use(new Strategy({
   consumerKey: process.env.TWITTER_APP_KEY,
   consumerSecret: process.env.TWITTER_APP_SECRET,
-  callbackURL: '/api/auth/twitter/callback',
+  callbackURL: '/-/api/auth/twitter/callback',
   proxy: true
 }, async (token, tokenSecret, profile, cb) => {
   let results = {};
@@ -192,9 +192,9 @@ function authRequired(req, res, next) {
   jsonResponse(res, new Error('Not authenticated'), null);
 }
 
-app.get('/api/auth/user', async (req, res) => jsonResponse(res, null, req.passportUser));
-app.get('/api/auth/twitter/init', passport.authenticate('twitter'));
-app.get('/api/auth/twitter/callback', passport.authenticate('twitter', { failureRedirect: '/?failure' }), (req, res) => {
+app.get('/-/api/auth/user', async (req, res) => jsonResponse(res, null, req.passportUser));
+app.get('/-/api/auth/twitter/init', passport.authenticate('twitter'));
+app.get('/-/api/auth/twitter/callback', passport.authenticate('twitter', { failureRedirect: '/?failure' }), (req, res) => {
   if (process.env.NODE_ENV === 'dev') {
     res.redirect('http://localhost:3000/i');
   }
@@ -202,12 +202,12 @@ app.get('/api/auth/twitter/callback', passport.authenticate('twitter', { failure
     res.redirect('/i');
   }
 });
-app.get('/api/auth/logout', async (req, res) => {
+app.get('/-/api/auth/logout', async (req, res) => {
   req.session.destroy();
   jsonResponse(res, null, "OK");
 });
 
-app.get('/api/twitter-account', async (req, res) => {
+app.get('/-/api/twitter-account', async (req, res) => {
   const {
     twitterAccountQuery,
     twitterAccountHandle
@@ -226,7 +226,7 @@ app.get('/api/twitter-account', async (req, res) => {
   }
 });
 
-app.get('/api/twitter-account/rule', async (req, res) => {
+app.get('/-/api/twitter-account/rule', async (req, res) => {
   const {
     twitterAccountID
   } = req.query;
@@ -234,7 +234,7 @@ app.get('/api/twitter-account/rule', async (req, res) => {
   jsonResponse(res, null, result);
 });
 
-app.get('/api/tweet-token', async (req, res) => {
+app.get('/-/api/tweet-token', async (req, res) => {
   const {
     tweetID,
     twitterAccountID,
@@ -269,7 +269,7 @@ app.get('/api/tweet-token', async (req, res) => {
   }
 });
 
-app.post('/api/twitter-account/rule', async (req, res) => {
+app.post('/-/api/twitter-account/rule', async (req, res) => {
   const {
     allowAll,
     allowList,
@@ -344,7 +344,7 @@ const capturePost = (url, responseType) => {
   });
 };
 
-app.post('/api/tweet-token/uri', async (req, res) => {
+app.post('/-/api/tweet-token/uri', async (req, res) => {
   const {
     tokenID,
     networkID,
@@ -425,7 +425,7 @@ app.post('/api/tweet-token/uri', async (req, res) => {
   }
 });
 
-app.post('/api/tweet-token', async (req, res) => {
+app.post('/-/api/tweet-token', async (req, res) => {
   const {
     twitterAccountID,
     authorizedAddress,
@@ -596,10 +596,14 @@ app.post('/api/tweet-token', async (req, res) => {
   }
 });
 
+app.get('/-/api/status', async (req, res) => {
+  jsonResponse(res, null, 'OK');
+});
+
 app.get('/*', async (req, res) => {
   res.sendFile(path.resolve(__dirname, '../build/index.html'));
 });
 
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
+  console.log(`Server listening on port ${port}`)
 });

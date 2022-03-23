@@ -3,7 +3,7 @@ import { stringify } from 'qs';
 
 axios.defaults.withCredentials = true;
 
-const BASE_URL = window.location.href.indexOf('http://localhost:' === 0) ? 'http://localhost:8000/api' : '/api';
+const BASE_URL = window.location.href.indexOf('http://localhost:' === 0) ? 'http://localhost:8000/-/api' : '/-/api';
 
 export const login = () => window.location.href = `${BASE_URL}/auth/twitter/init`;
 
