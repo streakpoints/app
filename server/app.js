@@ -407,7 +407,7 @@ app.post('/api/tweet-token/uri', async (req, res) => {
       image: imageURI,
       description: tweetMessage,
       animation_url: animationURI,
-      external_url: '721.am'
+      external_url: 'https://721.am'
     }, {
       withCredentials: true,
       headers: {

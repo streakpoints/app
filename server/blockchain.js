@@ -118,7 +118,7 @@ const mint = async (
   const metaWallet = ethers.Wallet.createRandom();
   const sender = await metaWallet.getAddress();
   const signedTx = await metaWallet.signTransaction({
-    to: '0x178a1Eb0e321846B6137B0D38faF2F68e115a114',
+    to: '0x6Ea6c2B23c20db0F6024D39C5F61C56c4AB4E5F1',
     data: functionSignature,
     from: sender
   });
