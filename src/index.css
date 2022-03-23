@@ -1,0 +1,58 @@
+body {
+  margin: 0;
+  font-family: Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+input, textarea, button {
+  font-family: Helvetica;
+  font-size: 1em;
+}
+
+input:disabled {
+  cursor: not-allowed;
+}
+
+h2 {
+  margin-top: 2em;
+}
+
+input, textarea {
+  border-radius: 12px;
+  box-sizing: border-box;
+  padding: 1em;
+  border: 1px solid #ccc;
+}
+button {
+  cursor:  pointer;
+  font-size: 1em;
+  padding: .5em 1em;
+  border: none;
+  background-color: #3399FF;
+  color: white;
+  border-radius: 12px;
+  font-weight: bold;
+  box-shadow: 0 0 5px #ccc;
+}
+button:disabled {
+  cursor: not-allowed;
+  border: 1px solid transparent;
+  background-color: #73D9FF;
+  box-shadow: none;
+}
+body {
+  max-width: 500px;
+  padding: 1em;
+  margin: 0 auto;
+}
+
+a, a:visited, a:hover {
+  color: rgb(29, 155, 240);
+}
+
+select {
+  padding: 1em;
+  font-family: Helvetica, sans-serif;
+  border-radius: 12px;
+}

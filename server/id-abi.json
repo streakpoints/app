@@ -100,6 +100,24 @@
   {
     "inputs": [
       {
+        "internalType": "address[]",
+        "name": "tos",
+        "type": "address[]"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "tokenIDs",
+        "type": "uint256[]"
+      }
+    ],
+    "name": "approveBatch",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "address",
         "name": "owner",
         "type": "address"
@@ -140,6 +158,56 @@
     "name": "burn",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256[]",
+        "name": "tokenIDs",
+        "type": "uint256[]"
+      }
+    ],
+    "name": "burnBatch",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "tokenID",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "newReceiver",
+        "type": "address"
+      }
+    ],
+    "name": "changeTokenRoyaltyReceiver",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256[]",
+        "name": "tokenIDs",
+        "type": "uint256[]"
+      }
+    ],
+    "name": "existsBatch",
+    "outputs": [
+      {
+        "internalType": "bool[]",
+        "name": "",
+        "type": "bool[]"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -188,22 +256,132 @@
   {
     "inputs": [
       {
+        "internalType": "address",
+        "name": "spender",
+        "type": "address"
+      },
+      {
         "internalType": "uint256",
         "name": "tokenID",
         "type": "uint256"
+      }
+    ],
+    "name": "isApprovedOrOwner",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address[]",
+        "name": "spenders",
+        "type": "address[]"
       },
       {
+        "internalType": "uint256[]",
+        "name": "tokenIDs",
+        "type": "uint256[]"
+      }
+    ],
+    "name": "isApprovedOrOwnerBatch",
+    "outputs": [
+      {
+        "internalType": "bool[]",
+        "name": "",
+        "type": "bool[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "address",
-        "name": "recipient",
+        "name": "forwarder",
         "type": "address"
-      },
+      }
+    ],
+    "name": "isTrustedForwarder",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
       {
         "internalType": "string",
         "name": "tokenURI",
         "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "royaltyRateInteger",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "royaltyRateDecimal",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "royaltyReceiver",
+        "type": "address"
       }
     ],
     "name": "mint",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "messagePrefix",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "messageRoyaltyRateInteger",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "messageRoyaltyRateDecimal",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "messageRoyaltyReceiver",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "messageTokenURI",
+        "type": "string"
+      },
+      {
+        "internalType": "bytes",
+        "name": "minterSignature",
+        "type": "bytes"
+      }
+    ],
+    "name": "mintFromSignature",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -241,17 +419,32 @@
     "type": "function"
   },
   {
-    "constant": true,
-    "inputs": [{
-        "name": "",
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "tokenID",
         "type": "uint256"
-    }],
-    "name": "punkIndexToAddress",
-    "outputs": [{
+      },
+      {
+        "internalType": "uint256",
+        "name": "salePrice",
+        "type": "uint256"
+      }
+    ],
+    "name": "royaltyInfo",
+    "outputs": [
+      {
+        "internalType": "address",
         "name": "",
         "type": "address"
-    }],
-    "payable": false,
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -301,6 +494,57 @@
       }
     ],
     "name": "safeTransferFrom",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address[]",
+        "name": "froms",
+        "type": "address[]"
+      },
+      {
+        "internalType": "address[]",
+        "name": "tos",
+        "type": "address[]"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "tokenIDs",
+        "type": "uint256[]"
+      }
+    ],
+    "name": "safeTransferFromBatch",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address[]",
+        "name": "froms",
+        "type": "address[]"
+      },
+      {
+        "internalType": "address[]",
+        "name": "tos",
+        "type": "address[]"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "tokenIDs",
+        "type": "uint256[]"
+      },
+      {
+        "internalType": "bytes[]",
+        "name": "datas",
+        "type": "bytes[]"
+      }
+    ],
+    "name": "safeTransferFromWithDataBatch",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -451,6 +695,55 @@
     "name": "transferFrom",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address[]",
+        "name": "froms",
+        "type": "address[]"
+      },
+      {
+        "internalType": "address[]",
+        "name": "tos",
+        "type": "address[]"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "tokenIDs",
+        "type": "uint256[]"
+      }
+    ],
+    "name": "transferFromBatch",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "trustedForwarder",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "versionRecipient",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   }
 ]
