@@ -14,11 +14,7 @@ input:disabled {
   cursor: not-allowed;
 }
 
-h2 {
-  margin-top: 2em;
-}
-
-input, textarea {
+input[type="text"], textarea {
   border-radius: 12px;
   box-sizing: border-box;
   padding: 1em;

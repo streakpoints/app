@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
+import detectEthereumProvider from '@metamask/detect-provider';
 import styled from 'styled-components';
 import * as data from './data';
+import PageHeader from './PageHeader';
 
 function Tweet(props) {
   const handle = props.match.params.handle;
@@ -38,8 +40,11 @@ function Tweet(props) {
   }, [handle]);
 
   const connectWallet = async () => {
-    await window.ethereum.enable();
-    const eth = new ethers.providers.Web3Provider(window.ethereum);
+    const provider = await detectEthereumProvider();
+    if (!provider) {
+      window.alert('Unable to connect to Wallet');
+    }
+    const eth = new ethers.providers.Web3Provider(provider);
     const signer = await eth.getSigner();
     const signerAddress = await signer.getAddress();
     setAddress(signerAddress);
@@ -116,16 +121,7 @@ function Tweet(props) {
 
   return (
     <div>
-      <h2>
-        <a
-          target='_blank'
-          rel='noreferrer'
-          href={`https://twitter.com/${handle}`}
-          style={{ textDecoration: 'none' }}
-        >
-          @{handle} ➫
-        </a>
-      </h2>
+      <PageHeader handle={handle} />
       <textarea
         placeholder="message"
         style={{ width: '100%', height: '30vh', marginBottom: '1em', resize: 'vertical' }}

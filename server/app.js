@@ -66,6 +66,7 @@ function repeat(template, occurences) {
 
 const directives = helmet.contentSecurityPolicy.getDefaultDirectives();
 directives['default-src'] = [ "'self'", "api.opensea.io" ];
+directives['script-src'] = [ "'self'", "'unsafe-inline'" ];
 app.use(helmet({
   contentSecurityPolicy: {
     directives
@@ -473,7 +474,6 @@ app.post('/-/api/tweet-token', async (req, res) => {
         throw new Error('Token Not Authorized');
       }
     }
-
 
     if (accountRules.filter(r => (r.token_id == '*' || !r.token_id) && r.is_allowed).length == 0) {
       // Token collection and/or Address have not been blanket approved
