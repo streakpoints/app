@@ -26,7 +26,7 @@ function Start() {
       {
         tweets.map(t => (
           <TweetEmbed
-            memo={t.token_memo}
+            memo={null}
             handle={t.handle}
             tweetID={t.tweet_id}
             tokenID={t.token_id}
