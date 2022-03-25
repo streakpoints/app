@@ -26,6 +26,7 @@ function Setup() {
           setAllowAll(true);
         }
         else if (results.filter(r => r.token_id).length > 0) {
+          setMode('collection');
           const tokenIDs = [];
           let tokenContract = '';
           results.forEach(r => {
@@ -41,8 +42,8 @@ function Setup() {
           }
         }
         else if (results.length > 0) {
-          setAllowList(results.map(r => r.eth_address));
           setMode('address');
+          setAllowList(results.map(r => r.eth_address));
         }
       });
     });
