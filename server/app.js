@@ -357,7 +357,7 @@ app.post('/-/api/tweet-token/uri', async (req, res) => {
     const [twitterAccountRules] = await pool.query(
       `
       SELECT * FROM twitter_account_rule
-      WHERE twitter_account_id = ? AND eth_address = ? AND is_allowed IS TRUE
+      WHERE twitter_account_id = ? AND eth_address IN (?, "*") AND is_allowed IS TRUE
       `,
       [ twitterAccountID, authorizedAddress ]
     );
@@ -445,7 +445,7 @@ app.post('/-/api/tweet-token', async (req, res) => {
     const [accountRules] = await pool.query(
       `
       SELECT * FROM twitter_account_rule
-      WHERE twitter_account_id = ? AND eth_address = ?
+      WHERE twitter_account_id = ? AND eth_address IN(?, "*")
       `,
       [ twitterAccountID, authorizedAddress ]
     );
@@ -476,6 +476,13 @@ app.post('/-/api/tweet-token', async (req, res) => {
       if (accountRules.filter(r => r.token_id == authorizedTokenID && r.is_allowed).length == 0) {
         // Exact token not allowed match
         throw new Error('Token Not Authorized');
+      }
+    }
+    else {
+      // Address gated
+      const banMatches = accountRules.filter(r => (!r.is_allowed && r.eth_address == authorizedAddress));
+      if (banMatches.length > 0) {
+        throw new Error('Address Blocked');
       }
     }
 

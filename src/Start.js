@@ -9,7 +9,6 @@ function Start() {
   useEffect(() => {
     data.getTweets({})
     .then(tweets => {
-      console.log(tweets);
       setTweets(tweets);
     })
   }, []);

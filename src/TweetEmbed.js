@@ -1,4 +1,5 @@
 import React, { useCallback } from 'react';
+import { Link } from 'react-router-dom';
 
 function TweetEmbed(props) {
   const tweetContainer = useCallback(async (node) => {
@@ -16,14 +17,12 @@ function TweetEmbed(props) {
       <div ref={tweetContainer}>
         {props.memo}
       </div>
-      <a
-        rel='noreferrer'
-        target='_blank'
+      <Link
         style={{ textDecoration: 'none' }}
-        href={`/${props.handle}`}
+        to={`/${props.handle}`}
       >
         @{props.handle}
-      </a>
+      </Link>
       &nbsp;&middot;&nbsp;
       <a
         rel='noreferrer'

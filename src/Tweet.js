@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import styled from 'styled-components';
-import * as data from './data';
 import PageHeader from './PageHeader';
+import TweetEmbed from './TweetEmbed';
+import * as data from './data';
 
 function Tweet(props) {
   const handle = props.match.params.handle;
@@ -11,6 +12,7 @@ function Tweet(props) {
   const [tweetMessage, setTweetMessage] = useState('');
   const [tokenID, setTokenID] = useState(null);
   const [tweetID, setTweetID] = useState(null);
+  const [tweets, setTweets] = useState([]);
   const [tokenContract, setTokenContract] = useState(null);
   const [assets, setAssets] = useState([]);
   const [reviewing, setReviewing] = useState(false);
@@ -34,6 +36,10 @@ function Tweet(props) {
           });
           setTokenContract(tokenContract);
         });
+        data.getTweets({ twitterAccountID: result[0].id })
+        .then(tweets => {
+          setTweets(tweets);
+        })
       }
     });
   }, [handle]);
@@ -134,6 +140,18 @@ function Tweet(props) {
           Tweet
         </button>
       </div>
+      <h2>Recent Tweets</h2>
+      {
+        tweets.map(t => (
+          <TweetEmbed
+            memo={null}
+            handle={t.handle}
+            tweetID={t.tweet_id}
+            tokenID={t.token_id}
+            key={t.tweet_id}
+          />
+        ))
+      }
       {
         reviewing &&
         <ClickCapturer onClick={() => setReviewing(false)}>

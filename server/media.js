@@ -53,7 +53,7 @@ const generate721HTML = url => {
       var wrap = document.getElementById('wrap');
       if (wrap.getBoundingClientRect().height < 210) {
         var fontSize = 16;
-        while (wrap.getBoundingClientRect().height < 210) {
+        while (wrap.getBoundingClientRect().height < 210 && fontSize <= 160) {
           wrap.style.fontSize = '' + ++fontSize + 'px';
         }
         wrap.style.fontSize = '' + --fontSize + 'px';
