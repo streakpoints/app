@@ -240,35 +240,30 @@ app.get('/-/api/twitter-account/rule', async (req, res) => {
 
 app.get('/-/api/tweet-token', async (req, res) => {
   const {
-    tweetID,
     twitterAccountID,
-    nftOwnerTokenID,
     offset,
     limit
   } = req.query;
   if (twitterAccountID) {
     const [result] = await pool.query(
-      `SELECT * FROM tweet_721 WHERE twitter_account_id = ? ORDER BY create_time DESC LIMIT ?,?`,
-      [ twitterAccountID, offset, limit ]
-    );
-    jsonResponse(res, null, result);
-  }
-  else if (ownerID) {
-    const [result] = await pool.query(
-      `SELECT * FROM tweet_721 WHERE owner_id = ? ORDER BY create_time DESC LIMIT ?,?`,
-      [ ownerID, offset, limit ]
-    );
-    jsonResponse(res, null, result);
-  }
-  else if (tweetID) {
-    const [result] = await pool.query(
-      `SELECT * FROM tweet_721 WHERE id = ?`,
-      [ tweetID ]
+      `
+      SELECT * FROM tweet_token
+      INNER JOIN twitter_account ON twitter_account.id = tweet_token.twitter_account_id
+      WHERE twitter_account.protected IS FALSE AND twitter_account_id = ?
+      ORDER BY create_time DESC LIMIT ?,?`,
+      [ twitterAccountID, offset || 0, limit || 12 ]
     );
     jsonResponse(res, null, result);
   }
   else {
-    const [result] = await pool.query(`SELECT * FROM tweet_721 ORDER BY create_time DESC limit ?,?`, [offset, limit]);
+    const [result] = await pool.query(
+      `
+      SELECT * FROM tweet_token
+      INNER JOIN twitter_account ON twitter_account.id = tweet_token.twitter_account_id
+      WHERE twitter_account.protected IS FALSE
+      ORDER BY create_time DESC limit ?,?`,
+      [ offset || 0, limit || 12 ]
+    );
     jsonResponse(res, null, result);
   }
 });

@@ -22,6 +22,11 @@ export const getRules = async params => {
   return response.data.results;
 }
 
+export const getTweets = async params => {
+  const response = await axios.get(`${BASE_URL}/tweet-token`, { params });
+  return response.data.results;
+}
+
 export const archive = async params => {
   try {
     const response = await axios.post(`${BASE_URL}/tweet-token/uri`, params);

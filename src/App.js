@@ -1,6 +1,6 @@
 import Tweet from './Tweet';
 import Setup from './Setup';
-// import Start from './Start';
+import Start from './Start';
 import './App.css';
 import {
   BrowserRouter as Router,
@@ -13,7 +13,7 @@ function App() {
     <Router>
       <Switch>
         <Route path='/i' component={Setup} />
-        <Route exact path='/' component={Setup} />
+        <Route exact path='/' component={Start} />
         <Route path='/:handle?' component={Tweet} />
       </Switch>
     </Router>

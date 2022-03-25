@@ -15,7 +15,7 @@ function PageHeader(props) {
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', fontSize: '1.5em' }}>
-      <div style={{ textAlign: 'right', padding: '.5em', paddingLeft: '0' }}>
+      <div style={{ padding: '.5em', paddingLeft: '0' }}>
         <Link style={{ textDecoration: 'none' }} to='/'>🎙</Link>
       </div>
       {
@@ -24,7 +24,7 @@ function PageHeader(props) {
           target='_blank'
           rel='noreferrer'
           href={`https://twitter.com/${props.handle}`}
-          style={{ textDecoration: 'none' }}
+          style={{ textDecoration: 'none', width: '100%' }}
         >
           @{props.handle} ➫
         </a>
@@ -70,7 +70,9 @@ function PageHeader(props) {
           </div>
         )
       }
-
+      <div style={{ padding: '.5em', paddingRight: '0' }}>
+        <Link style={{ textDecoration: 'none' }} to='/i'>⚙️</Link>
+      </div>
     </div>
   );
 }

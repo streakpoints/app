@@ -7,10 +7,7 @@ function Setup() {
 
   const [userID, setUserID] = useState(null);
   const [userName, setUserName] = useState(null);
-  const [mode, setMode] = useState('collection');
-  const [address, setAddress] = useState(null);
-  const [collections, setCollections] = useState([]);
-  const [collectionIdx, setCollectionIdx] = useState(-1);
+  const [mode, setMode] = useState('address');
   const [tokenContract, setTokenContract] = useState('');
   const [allowAll, setAllowAll] = useState(true);
   const [allowList, setAllowList] = useState([]);
@@ -50,45 +47,6 @@ function Setup() {
       });
     });
   }, [userID]);
-
-  const connectWallet = async () => {
-    await window.ethereum.enable();
-    const eth = new ethers.providers.Web3Provider(window.ethereum);
-    const signer = await eth.getSigner();
-    const signerAddress = await signer.getAddress();
-    setAddress(signerAddress);
-    const collections = await data.getCollectionsOpensea(signerAddress);
-    const c = collections
-    .filter(c => c.primary_asset_contracts.length === 1)
-    .sort((a, b) => a.name < b.name ? -1 : 1);
-    setCollections(c);
-
-    if (tokenContract) {
-      let idx = null;
-      c.forEach((c, i) => {
-        if (c.primary_asset_contracts[0].address === tokenContract) {
-          idx = i;
-        }
-      });
-      if (idx) {
-        setCollectionIdx(idx);
-      }
-    }
-  };
-
-  const selectCollection = async (idx) => {
-    setAllowList([]);
-    setAllowAll(true);
-    if (idx < 0) {
-      setTokenContract('');
-      setCollectionIdx(idx);
-      return;
-    }
-    else {
-      setCollectionIdx(idx);
-      setTokenContract(collections[idx].primary_asset_contracts[0].address);
-    }
-  };
 
   const save = async () => {
     setSaving(true);
@@ -134,14 +92,10 @@ function Setup() {
   return (
     <div>
       <PageHeader handle='' />
-      <h2 style={{ textAlign: 'center' }}>web3 🤝 tweets</h2>
-      <p>Tweet directly from your web3 wallet, no password necessary. Every tweet is also minted to you as an NFT.</p>
-      <p>Grant tweet privileges to a single address, a group of addresses, or an NFT collection. </p>
-      <p>For more information, check out our <a target='_blank' rel='noreferrer' href='https://docs.google.com/document/d/1x0KF0fKu6pSgdcBtqAn5UGuyEWrd2_Kt1UYDfC_2OsA/edit?usp=sharing'>FAQ.</a> Or get set up below!</p>
-      <br />
+      <h2 style={{ textAlign: 'center' }}>Manage your bridge</h2>
       <h2>1. Link your account</h2>
       <p>Enable API access to your account.</p>
-      <div style={{ marginBottom: '1em' }}>
+      <div>
         {
           userID ? (
             <div>Logged in as <a href={`/${userName}`}>@{userName}</a> 🔒 <a href='/' onClick={() => data.logout()}>Logout</a></div>
@@ -153,21 +107,7 @@ function Setup() {
       <br />
       <h2>2. Grant access</h2>
       <p>Customize who is allowed to tweet.</p>
-      <div className='label'>Grant access to a set of:</div>
-      <label style={{ cursor: 'pointer', userSelect: 'none' }}>
-        <input
-          type='radio'
-          value='Other'
-          checked={mode === 'collection'}
-          onChange={() => {
-            setAllowList([]);
-            setAllowAll(true);
-            setMode('collection');
-          }}
-        />
-        NFT Owners
-      </label>
-      <br />
+      <div className='label'>Grant access to either:</div>
       <label style={{ cursor: 'pointer', userSelect: 'none' }}>
         <input
           type='radio'
@@ -180,38 +120,30 @@ function Setup() {
         />
         Addresses
       </label>
-      <div style={{ marginBottom: '1em' }}>
+      <br />
+      <label style={{ cursor: 'pointer', userSelect: 'none' }}>
+        <input
+          type='radio'
+          value='Other'
+          checked={mode === 'collection'}
+          onChange={() => {
+            setAllowList([]);
+            setAllowAll(true);
+            setMode('collection');
+          }}
+        />
+        NFT Collection
+      </label>
+      <div>
         {
           mode === 'collection' &&
           <div>
-            <div className='label'>Collection</div>
-            {
-              address ? (
-                <select
-                  style={{ width: '100%' }}
-                  value={collectionIdx}
-                  onChange={e => selectCollection(e.target.value)}
-                >
-                  <option value='-1'>[Custom - Specify]</option>
-                  {
-                    collections.map((c, i) => (
-                      <option key={`coll-${c.name}`} value={i}>{c.name}</option>
-                    ))
-                  }
-                </select>
-              ) : (
-                <div style={{ textAlign: 'left', marginTop: '1em' }}>
-                  <button onClick={connectWallet}>Connect Wallet</button>
-                </div>
-              )
-            }
-            <div className='label'>Contract</div>
+            <div className='label'>NFT Contract</div>
             <input
               type='text'
               placeholder='0x...'
               value={tokenContract}
               onChange={e => setTokenContract(e.target.value)}
-              disabled={collectionIdx !== -1}
               style={{ width: '100%' }}
             />
             {
