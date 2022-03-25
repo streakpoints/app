@@ -16,6 +16,7 @@ const ethers = require('ethers');
 const axios = require('axios');
 const dotenv = require('dotenv');
 const path = require('path');
+const twitterValidator = require('twitter-text');
 
 dotenv.config({ path: path.join(__dirname, '.env') });
 
@@ -538,11 +539,30 @@ app.post('/-/api/tweet-token', async (req, res) => {
       '0x' + tweetHash.slice(-16)
     ).toString();
 
+
+    let editedTweet = tweetMessage;
+    let hashtags = twitterValidator.extractHashtagsWithIndices(editedTweet);
+    for (let i = hashtags.length; i > 0; i--) {
+      const tag = hashtags[i - 1];
+      editedTweet = editedTweet.substr(0, tag.indices[0]) + '#️⃣' + editedTweet.substr(tag.indices[0] + 1);
+    }
+    let mentions = twitterValidator.extractMentionsWithIndices(editedTweet);
+    for (let i = mentions.length; i > 0; i--) {
+      const tag = mentions[i - 1];
+      editedTweet = editedTweet.substr(0, tag.indices[0]) + '👤' + editedTweet.substr(tag.indices[0] + 1);
+    }
+
+    editedTweet = `${editedTweet}\n\n🗣${broadcastIdentifier}\nID ${tokenID}`
+
+    if (!twitterValidator.parseTweet(editedTweet).valid) {
+      throw new Error('Tweet too long');
+    }
     /**
      * 5. Take a screenshot of the tweet text
      */
-    const tokenFrame = `https://embed-renderer.s3.us-west-2.amazonaws.com/721.html?${encodeURIComponent(tweetMessage)}`;
-    const imageCapture = await capturePost(tokenFrame, 'arraybuffer');
+    // TEXT-MODE
+    // const tokenFrame = `https://embed-renderer.s3.us-west-2.amazonaws.com/721.html?${encodeURIComponent(tweetMessage)}`;
+    // const imageCapture = await capturePost(tokenFrame, 'arraybuffer');
 
     /**
      * 6. Grab the twitter credentials and tweet
@@ -560,12 +580,14 @@ app.post('/-/api/tweet-token', async (req, res) => {
       accessToken: twitterAccountKeys[0].access_key,
       accessSecret: twitterAccountKeys[0].access_secret
     });
-    const mediaID = await twitter.v1.uploadMedia(imageCapture.data, { type: 'png' });
+    // TEXT-MODE
+    // const mediaID = await twitter.v1.uploadMedia(imageCapture.data, { type: 'png' });
     const tweet = await twitter.v2.tweet({
-      text: `${broadcastIdentifier}:\n\nID ${tokenID}`,
-      media: {
-        media_ids: [ mediaID ]
-      }
+      text: editedTweet,
+      // TEXT-MODE
+      // media: {
+      //   media_ids: [ mediaID ]
+      // }
     });
 
     /**

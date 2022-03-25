@@ -125,6 +125,7 @@ function Tweet(props) {
     <div>
       <PageHeader handle={handle} />
       <textarea
+        maxlength="200"
         placeholder="message"
         style={{ width: '100%', height: '30vh', marginBottom: '1em', resize: 'vertical' }}
         value={tweetMessage}
