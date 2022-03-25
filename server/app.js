@@ -245,27 +245,33 @@ app.get('/-/api/tweet-token', async (req, res) => {
     offset,
     limit
   } = req.query;
-  if (twitterAccountID) {
-    const [result] = await pool.query(
-      `
-      SELECT * FROM tweet_token, twitter_account
-      INNER JOIN twitter_account ON twitter_account.id = tweet_token.twitter_account_id
-      WHERE twitter_account.protected IS FALSE AND twitter_account_id = ?
-      ORDER BY create_time DESC LIMIT ?,?`,
-      [ twitterAccountID, offset || 0, limit || 12 ]
-    );
-    jsonResponse(res, null, result);
+  try {
+    if (twitterAccountID) {
+      const [result] = await pool.query(
+        `
+        SELECT * FROM tweet_token, twitter_account
+        INNER JOIN twitter_account ON twitter_account.id = tweet_token.twitter_account_id
+        WHERE twitter_account.protected IS FALSE AND twitter_account.id = ?
+        ORDER BY create_time DESC LIMIT ?,?`,
+        [ twitterAccountID, offset || 0, limit || 12 ]
+      );
+      jsonResponse(res, null, result);
+    }
+    else {
+      const [result] = await pool.query(
+        `
+        SELECT * FROM tweet_token
+        INNER JOIN twitter_account ON twitter_account.id = tweet_token.twitter_account_id
+        WHERE twitter_account.protected IS FALSE
+        ORDER BY create_time DESC limit ?,?`,
+        [ offset || 0, limit || 12 ]
+      );
+      jsonResponse(res, null, result);
+    }
   }
-  else {
-    const [result] = await pool.query(
-      `
-      SELECT * FROM tweet_token
-      INNER JOIN twitter_account ON twitter_account.id = tweet_token.twitter_account_id
-      WHERE twitter_account.protected IS FALSE
-      ORDER BY create_time DESC limit ?,?`,
-      [ offset || 0, limit || 12 ]
-    );
-    jsonResponse(res, null, result);
+  catch (e) {
+    console.log(e.message);
+    jsonResponse(res, e);
   }
 });
 
