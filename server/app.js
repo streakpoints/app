@@ -65,9 +65,10 @@ function repeat(template, occurences) {
 }
 
 const directives = helmet.contentSecurityPolicy.getDefaultDirectives();
-directives['default-src'] = [ "'self'", "api.opensea.io" ];
+directives['default-src'] = [ "'self'", "api.opensea.io", "platform.twitter.com" ];
 directives['script-src'] = [ "'self'", "'unsafe-inline'", "platform.twitter.com" ];
 app.use(helmet({
+  crossOriginEmbedderPolicy: false,
   contentSecurityPolicy: {
     directives
   }
