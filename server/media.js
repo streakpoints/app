@@ -50,14 +50,16 @@ const generate721HTML = url => {
   <body>
     <div id="root"><div id="wrap">${text}</div></div>
     <script>
-      var wrap = document.getElementById('wrap');
-      if (wrap.getBoundingClientRect().height < 210) {
-        var fontSize = 16;
-        while (wrap.getBoundingClientRect().height < 210 && fontSize <= 160) {
-          wrap.style.fontSize = '' + ++fontSize + 'px';
+      window.addEventListener('load', function() {
+        var wrap = document.getElementById('wrap');
+        if (wrap.getBoundingClientRect().height < 210) {
+          var fontSize = 16;
+          while (wrap.getBoundingClientRect().height < 210 && fontSize <= 160) {
+            wrap.style.fontSize = '' + ++fontSize + 'px';
+          }
+          wrap.style.fontSize = '' + --fontSize + 'px';
         }
-        wrap.style.fontSize = '' + --fontSize + 'px';
-      }
+      });
     </script>
   </body>
 </html>
