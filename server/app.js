@@ -66,7 +66,7 @@ function repeat(template, occurences) {
 
 const directives = helmet.contentSecurityPolicy.getDefaultDirectives();
 directives['default-src'] = [ "'self'", "api.opensea.io" ];
-directives['script-src'] = [ "'self'", "'unsafe-inline'" ];
+directives['script-src'] = [ "'self'", "'unsafe-inline'", "platform.twitter.com" ];
 app.use(helmet({
   contentSecurityPolicy: {
     directives
@@ -247,7 +247,7 @@ app.get('/-/api/tweet-token', async (req, res) => {
   if (twitterAccountID) {
     const [result] = await pool.query(
       `
-      SELECT * FROM tweet_token
+      SELECT * FROM tweet_token, twitter_account
       INNER JOIN twitter_account ON twitter_account.id = tweet_token.twitter_account_id
       WHERE twitter_account.protected IS FALSE AND twitter_account_id = ?
       ORDER BY create_time DESC LIMIT ?,?`,
