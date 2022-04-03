@@ -150,10 +150,10 @@ function Tweet(props) {
           {
             rules.map(r => (
               <div style={{ paddingBottom: '1em' }}>
-                <div><b>Address:</b> {r.eth_address}</div>
+                <div><b>Address:</b> <a href={`https://etherscan.io/address/${r.eth_address}`} target='_blank' rel='noreferrer'>{r.eth_address}</a></div>
                 {
                   r.token_id && (
-                    <div><b>Token:</b> {r.token_id}</div>
+                    <div><b>Token ID:</b> {r.token_id}</div>
                   )
                 }
               </div>
