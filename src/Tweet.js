@@ -153,7 +153,7 @@ function Tweet(props) {
                 <div><b>Address:</b> {r.eth_address}</div>
                 {
                   r.token_id && (
-                    <div><b>Token:</b> ${r.token_id}</div>
+                    <div><b>Token:</b> {r.token_id}</div>
                   )
                 }
               </div>
