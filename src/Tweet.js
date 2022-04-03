@@ -19,6 +19,7 @@ function Tweet(props) {
   const [notFound, setNotFound] = useState(false);
   const [userID, setUserID] = useState(null);
   const [progress, setProgress] = useState(null);
+  const [rules, setRules] = useState([])
   
   useEffect(() => {
     data.searchUser({ twitterAccountHandle: handle }).then((result) => {
@@ -28,6 +29,7 @@ function Tweet(props) {
       else {
         setUserID(result[0].id);
         data.getRules({ twitterAccountID: result[0].id }).then((results) => {
+          setRules(results);
           let tokenContract = null;
           results.forEach(r => {
             if (r.token_id) {
@@ -141,6 +143,27 @@ function Tweet(props) {
           Tweet
         </button>
       </div>
+      <h2>Who has access?</h2>
+      {
+        rules.length > 0 ? (
+          <div>
+          {
+            rules.map(r => (
+              <div style={{ paddingBottom: '1em' }}>
+                <div><b>Address:</b> {r.eth_address}</div>
+                {
+                  r.token_id && (
+                    <div><b>Token:</b> ${r.token_id}</div>
+                  )
+                }
+              </div>
+            ))
+          }
+          </div>
+        ) : (
+          <div>Nobody yet!</div>
+        )
+      }
       <h2>Recent Tweets</h2>
       {
         tweets.map(t => (
