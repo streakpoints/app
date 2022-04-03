@@ -544,15 +544,15 @@ app.post('/-/api/tweet-token', async (req, res) => {
     let hashtags = twitterValidator.extractHashtagsWithIndices(editedTweet);
     for (let i = hashtags.length; i > 0; i--) {
       const tag = hashtags[i - 1];
-      editedTweet = editedTweet.substr(0, tag.indices[0]) + '#️⃣' + editedTweet.substr(tag.indices[0] + 1);
+      editedTweet = editedTweet.substr(0, tag.indices[0]) + '#​' + editedTweet.substr(tag.indices[0] + 1);
     }
     let mentions = twitterValidator.extractMentionsWithIndices(editedTweet);
     for (let i = mentions.length; i > 0; i--) {
       const tag = mentions[i - 1];
-      editedTweet = editedTweet.substr(0, tag.indices[0]) + '👤' + editedTweet.substr(tag.indices[0] + 1);
+      editedTweet = editedTweet.substr(0, tag.indices[0]) + '@​' + editedTweet.substr(tag.indices[0] + 1);
     }
 
-    editedTweet = `${editedTweet}\n\n🗣${broadcastIdentifier}\nID ${tokenID}`
+    editedTweet = `${editedTweet}\n\n-- ${broadcastIdentifier}\nID ${tokenID}`
 
     if (!twitterValidator.parseTweet(editedTweet).valid) {
       throw new Error('Tweet too long');
