@@ -201,19 +201,16 @@ function Setup() {
                       }}
                     />
                   </div>
-                  {
-                    i !== 0 &&
-                    <div
-                      style={{ padding: '1em', cursor: 'pointer', lineHeight: '1em' }}
-                      onClick={() => {
-                        const cloneList = accessControlList.slice(0);
-                        cloneList.splice(i, 1);
-                        setAccessControlList(cloneList);
-                      }}
-                    >
-                      ❌
-                    </div>
-                  }
+                  <div
+                    style={{ padding: '1em', cursor: 'pointer', lineHeight: '1em' }}
+                    onClick={() => {
+                      const cloneList = accessControlList.slice(0);
+                      cloneList.splice(i, 1);
+                      setAccessControlList(cloneList);
+                    }}
+                  >
+                    ❌
+                  </div>
                 </div>
               ))
             }
