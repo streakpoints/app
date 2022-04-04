@@ -473,7 +473,7 @@ app.post('/-/api/tweet-token', async (req, res) => {
         // Token blocked. You can block if you "allow all" by default
         throw new Error('Token Blocked');
       }
-      if (!allowAll && allowMatches.length > 0) {
+      if (!allowAll && allowMatches.length == 0) {
         throw new Error('Token Not Authorized');
       }
     }
