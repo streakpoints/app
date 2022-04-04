@@ -561,7 +561,7 @@ app.post('/-/api/tweet-token', async (req, res) => {
       editedTweet = editedTweet.substr(0, tag.indices[0]) + '@​' + editedTweet.substr(tag.indices[0] + 1);
     }
 
-    editedTweet = `${editedTweet}\n\n-- ${broadcastIdentifier}\nID ${tokenID}`
+    // editedTweet = `${editedTweet}\n\n-- ${broadcastIdentifier}\nID ${tokenID}`
 
     if (!twitterValidator.parseTweet(editedTweet).valid) {
       throw new Error('Tweet too long');
