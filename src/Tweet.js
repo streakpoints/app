@@ -123,6 +123,12 @@ function Tweet(props) {
     )
   }
 
+  const addressMap = {};
+  rules.forEach(r => addressMap[r.eth_address] = true);
+  const addresses = Object.keys(addressMap);
+  const allowedTokenIDs = rules.filter(r => r.token_id && r.is_allowed).map(r => r.token_id);
+  const blockedTokenIDs = rules.filter(r => r.token_id && !r.is_allowed).map(r => r.token_id);
+
   return (
     <div>
       <PageHeader handle={handle} />
@@ -145,20 +151,21 @@ function Tweet(props) {
       </div>
       <h2>Who has access?</h2>
       {
-        rules.length > 0 ? (
+        addresses.length > 0 ? (
           <div>
-          {
-            rules.map(r => (
-              <div style={{ paddingBottom: '1em' }}>
-                <div><b>Address:</b> <a href={`https://etherscan.io/address/${r.eth_address}`} target='_blank' rel='noreferrer'>{r.eth_address}</a></div>
-                {
-                  r.token_id && (
-                    <div><b>Token ID:</b> {r.token_id}</div>
-                  )
-                }
-              </div>
-            ))
-          }
+            {
+              addresses.map(a => (
+                <div style={{ paddingBottom: '1em' }}>
+                  <div><b>Address:</b> <a href={`https://etherscan.io/address/${a}`} target='_blank' rel='noreferrer'>{a}</a></div>
+                </div>
+              ))
+            }
+            <div style={{ paddingBottom: '1em' }}>
+              <div><b>Allowed Tokens:</b> { allowedTokenIDs.join(', ')}</div>
+            </div>
+            <div style={{ paddingBottom: '1em' }}>
+              <div><b>Blocked Tokens:</b> { blockedTokenIDs.join(', ')}</div>
+            </div>
           </div>
         ) : (
           <div>Nobody yet!</div>

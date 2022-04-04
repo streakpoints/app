@@ -279,7 +279,7 @@ app.get('/-/api/tweet-token', async (req, res) => {
 app.post('/-/api/twitter-account/rule', async (req, res) => {
   const {
     allowAll,
-    allowList,
+    accessControlList,
     authorizedAddress
   } = req.body;
   const twitterAccountID = req.passportUser.id;
@@ -291,23 +291,33 @@ app.post('/-/api/twitter-account/rule', async (req, res) => {
     const rules = [];
     if (authorizedAddress) {
       if (allowAll) {
+        // Add the NFT contract
         rules.push(twitterAccountID, authorizedAddress, '*', true);
+
+        // Add the block list
+        if (accessControlList !== undefined) {
+          accessControlList.split(',').forEach(tokenID =>
+            rules.push(twitterAccountID, authorizedAddress, tokenID, false)
+          );
+        }
       }
-      else if (allowList !== undefined) {
-        allowList.split(',').forEach(tokenID =>
+      else if (accessControlList !== undefined) {
+        // Add the allow list
+        accessControlList.split(',').forEach(tokenID =>
           rules.push(twitterAccountID, authorizedAddress, tokenID, true)
         );
       }
     }
     else {
-      if (allowList !== undefined) {
-        allowList.split(',').forEach(address =>
+      // Add the address
+      if (accessControlList !== undefined) {
+        accessControlList.split(',').forEach(address =>
           rules.push(twitterAccountID, address, null, true)
         );
       }
     }
-    if (rules.length > 50) {
-      throw new Error('Max 50 entries allowed');
+    if (rules.length > 1001) {
+      throw new Error('Max 1000 entries allowed');
     }
     await pool.query(
       `
@@ -465,8 +475,7 @@ app.post('/-/api/tweet-token', async (req, res) => {
     if (NFTGateRules.length > 0) {
       if (!authorizedTokenID || authorizedTokenID.length == 0) {
         throw new Error('Invalid Token ID');
-      }
-      const allowMatches = NFTGateRules.filter(r => (r.is_allowed && r.token_id == authorizedTokenID));
+      }      const allowMatches = NFTGateRules.filter(r => (r.is_allowed && r.token_id == authorizedTokenID));
       const banMatches = NFTGateRules.filter(r => (!r.is_allowed && r.token_id == authorizedTokenID));
       const allowAll = NFTGateRules.filter(r => (r.is_allowed && r.token_id == '*')).length > 0;
       if (banMatches.length > 0) {

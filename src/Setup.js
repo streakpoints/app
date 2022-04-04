@@ -10,7 +10,7 @@ function Setup() {
   const [mode, setMode] = useState('address');
   const [tokenContract, setTokenContract] = useState('');
   const [allowAll, setAllowAll] = useState(true);
-  const [allowList, setAllowList] = useState([]);
+  const [accessControlList, setAccessControlList] = useState([]);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -36,14 +36,14 @@ function Setup() {
             }
           });
           setTokenContract(tokenContract);
-          setAllowList(tokenIDs);
+          setAccessControlList(tokenIDs);
           if (tokenIDs.length > 0) {
             setAllowAll(false);
           }
         }
         else if (results.length > 0) {
           setMode('address');
-          setAllowList(results.map(r => r.eth_address));
+          setAccessControlList(results.map(r => r.eth_address));
         }
       });
     });
@@ -51,21 +51,30 @@ function Setup() {
 
   const save = async () => {
     setSaving(true);
+    const ACL = accessControlList.length > 0 ? accessControlList.join(',') : undefined;
     if (mode === 'collection') {
       if (!tokenContract || tokenContract.length === 0) {
         window.alert('Invalid contract');
         setSaving(false);
         return;
       }
-      await data.save({
-        allowAll,
-        allowList: allowList.join(','),
-        authorizedAddress: tokenContract
-      });
+      if (allowAll) {
+        await data.save({
+          allowAll: true,
+          accessControlList: ACL,
+          authorizedAddress: tokenContract
+        });
+      }
+      else {
+        await data.save({
+          accessControlList: ACL,
+          authorizedAddress: tokenContract
+        });
+      }
     }
     else if (mode === 'address') {
       try {
-        allowList.map(a => ethers.utils.getAddress(a));
+        accessControlList.map(a => ethers.utils.getAddress(a));
       }
       catch (e) {
         setSaving(false);
@@ -73,7 +82,7 @@ function Setup() {
         return;
       }
       await data.save({
-        allowList: allowList.length > 0 ? allowList.join(',') : undefined
+        accessControlList: ACL
       });
     }
     setSaving(false);
@@ -108,18 +117,18 @@ function Setup() {
       <br />
       <h2>2. Grant access</h2>
       <p>Customize who is allowed to tweet.</p>
-      <div className='label'>Grant access to either:</div>
+      <div className='label'>Grant access to:</div>
       <label style={{ cursor: 'pointer', userSelect: 'none' }}>
         <input
           type='radio'
           value='Other'
           checked={mode === 'address'}
           onChange={() => {
-            setAllowList([]);
+            setAccessControlList([]);
             setMode('address');
           }}
         />
-        Addresses
+        ETH Addresses
       </label>
       <br />
       <label style={{ cursor: 'pointer', userSelect: 'none' }}>
@@ -128,7 +137,7 @@ function Setup() {
           value='Other'
           checked={mode === 'collection'}
           onChange={() => {
-            setAllowList([]);
+            setAccessControlList([]);
             setAllowAll(true);
             setMode('collection');
           }}
@@ -160,22 +169,25 @@ function Setup() {
               id='allow-all'
               onChange={() => {
                 if (allowAll) {
-                  setAllowList(['']);
+                  setAccessControlList([]);
                   setAllowAll(false);
                 }
                 else {
-                  setAllowList([]);
+                  setAccessControlList([]);
                   setAllowAll(true);
                 }
               }}
               checked={allowAll}
             />
             {
-              !allowAll &&
-              <div className='label'>Specify tokens (max 50):</div>
+              allowAll ? (
+                <div className='label'>Block list:</div>
+              ) : (
+                <div className='label'>Allow list:</div>
+              )
             }
             {
-              allowList.map((t, i) => (
+              accessControlList.map((t, i) => (
                 <div key={`token-id-${i}`} style={{ display: 'flex', marginTop: '.5em' }}>
                   <div>
                     <input
@@ -183,9 +195,9 @@ function Setup() {
                       type='text'
                       value={t}
                       onChange={(e) => {
-                        const cloneList = allowList.slice(0);
+                        const cloneList = accessControlList.slice(0);
                         cloneList[i] = e.target.value;
-                        setAllowList(cloneList);
+                        setAccessControlList(cloneList);
                       }}
                     />
                   </div>
@@ -194,9 +206,9 @@ function Setup() {
                     <div
                       style={{ padding: '1em', cursor: 'pointer', lineHeight: '1em' }}
                       onClick={() => {
-                        const cloneList = allowList.slice(0);
+                        const cloneList = accessControlList.slice(0);
                         cloneList.splice(i, 1);
-                        setAllowList(cloneList);
+                        setAccessControlList(cloneList);
                       }}
                     >
                       ❌
@@ -206,16 +218,18 @@ function Setup() {
               ))
             }
             {
-              !allowAll && allowList.length < 50 &&
+              accessControlList.length < 1000 &&
               <button
-                onClick={() => setAllowList(allowList.slice(0).concat(['']))}
+                onClick={() => setAccessControlList(accessControlList.slice(0).concat(['']))}
                 style={{
                   marginTop: '1em',
                   color: '#000',
                   backgroundColor: '#CCC'
                 }}
               >
-                Add token
+              {
+                allowAll ? '+ Block Token ID' : '+ Allow Token ID'
+              }
               </button>
             }
           </div>
@@ -223,9 +237,9 @@ function Setup() {
         {
           mode === 'address' &&
           <div>
-            <div className='label'>Specify addresses (max 50):</div>
+            <div className='label'>Specify addresses (max 1000):</div>
             {
-              allowList.map((t, i) => (
+              accessControlList.map((t, i) => (
                 <div key={`addr-id-${i}`} style={{ display: 'flex', marginTop: '.5em' }}>
                   <div>
                     <input
@@ -234,18 +248,18 @@ function Setup() {
                       value={t}
                       style={{ width: '100%' }}
                       onChange={(e) => {
-                        const cloneList = allowList.slice(0);
+                        const cloneList = accessControlList.slice(0);
                         cloneList[i] = e.target.value;
-                        setAllowList(cloneList);
+                        setAccessControlList(cloneList);
                       }}
                     />
                   </div>
                   <div
                     style={{ padding: '1em', cursor: 'pointer', lineHeight: '1em' }}
                     onClick={() => {
-                      const cloneList = allowList.slice(0);
+                      const cloneList = accessControlList.slice(0);
                       cloneList.splice(i, 1);
-                      setAllowList(cloneList);
+                      setAccessControlList(cloneList);
                     }}
                   >
                     ❌
@@ -254,9 +268,9 @@ function Setup() {
               ))
             }
             {
-              allowList.length < 50 &&
+              accessControlList.length < 1000 &&
               <button
-                onClick={() => setAllowList(allowList.slice(0).concat(['']))}
+                onClick={() => setAccessControlList(accessControlList.slice(0).concat(['']))}
                 style={{
                   marginTop: '1em',
                   color: '#000',
