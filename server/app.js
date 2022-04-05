@@ -17,6 +17,7 @@ const axios = require('axios');
 const dotenv = require('dotenv');
 const path = require('path');
 const twitterValidator = require('twitter-text');
+const textToImage = require('text-to-image');
 
 dotenv.config({ path: path.join(__dirname, '.env') });
 
@@ -347,20 +348,6 @@ app.post('/-/api/twitter-account/rule', async (req, res) => {
   }
 });
 
-// Caches urls
-const capturePost = (url, responseType) => {
-  return axios({
-    method: 'GET',
-    url: 'https://api.urlbox.io/v1/3u7q126M7c8EpwyM/png',
-    responseType,
-    params: {
-      url,
-      selector: '.loaded',
-      fail_if_selector_missing: true
-    }
-  });
-};
-
 app.post('/-/api/tweet-token/uri', async (req, res) => {
   const {
     networkID,
@@ -387,10 +374,17 @@ app.post('/-/api/tweet-token/uri', async (req, res) => {
     const tokenName = `${broadcastIdentifier} ${new Date().toISOString().replace('T', ' ').split('.')[0]}`;
     const tokenFrame = `https://embed-renderer.s3.us-west-2.amazonaws.com/721.html?${encodeURIComponent(tweetMessage)}`;
 
-    // 3. Capture the image of the post, store on IPFS
+    // 3. Generate the image of the post, store on IPFS
+    const imageUri = await textToImage.generate(tweetMessage, {
+      textAlign: 'left',
+      maxWidth: 500,
+      fontWeight: 'bold'
+    });
     const imageForm = new FormData();
-    const imageCapture = await capturePost(tokenFrame, 'stream');
-    imageForm.append('file', imageCapture.data, { filename: 'screenshot.png' });
+    imageForm.append('file', Buffer.from(Base64.toUint8Array(imageUri.replace('data:image/png;base64,', ''))), {
+        filename: `token.png`,
+        contentType: 'image/png'
+    });
     const imageUpload = await axios.post('https://api.pinata.cloud/pinning/pinFileToIPFS', imageForm, {
       withCredentials: true,
       maxContentLength: Infinity, //this is needed to prevent axios from erroring out with large files
@@ -475,7 +469,8 @@ app.post('/-/api/tweet-token', async (req, res) => {
     if (NFTGateRules.length > 0) {
       if (!authorizedTokenID || authorizedTokenID.length == 0) {
         throw new Error('Invalid Token ID');
-      }      const allowMatches = NFTGateRules.filter(r => (r.is_allowed && r.token_id == authorizedTokenID));
+      }
+      const allowMatches = NFTGateRules.filter(r => (r.is_allowed && r.token_id == authorizedTokenID));
       const banMatches = NFTGateRules.filter(r => (!r.is_allowed && r.token_id == authorizedTokenID));
       const allowAll = NFTGateRules.filter(r => (r.is_allowed && r.token_id == '*')).length > 0;
       if (banMatches.length > 0) {
@@ -566,12 +561,6 @@ app.post('/-/api/tweet-token', async (req, res) => {
     if (!twitterValidator.parseTweet(editedTweet).valid) {
       throw new Error('Tweet too long');
     }
-    /**
-     * 5. Take a screenshot of the tweet text
-     */
-    // TEXT-MODE
-    // const tokenFrame = `https://embed-renderer.s3.us-west-2.amazonaws.com/721.html?${encodeURIComponent(tweetMessage)}`;
-    // const imageCapture = await capturePost(tokenFrame, 'arraybuffer');
 
     /**
      * 6. Grab the twitter credentials and tweet
@@ -592,11 +581,7 @@ app.post('/-/api/tweet-token', async (req, res) => {
     // TEXT-MODE
     // const mediaID = await twitter.v1.uploadMedia(imageCapture.data, { type: 'png' });
     const tweet = await twitter.v2.tweet({
-      text: editedTweet,
-      // TEXT-MODE
-      // media: {
-      //   media_ids: [ mediaID ]
-      // }
+      text: editedTweet
     });
 
     /**
