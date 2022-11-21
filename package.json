@@ -23,7 +23,7 @@
     "helmet": "^5.0.2",
     "js-base64": "^3.7.2",
     "mysql2": "^2.3.3",
-    "passport": "^0.5.2",
+    "passport": "^0.6.0",
     "passport-twitter": "^1.0.4",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
