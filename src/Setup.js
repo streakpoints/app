@@ -100,7 +100,7 @@ function Setup() {
   }
 
   return (
-    <div>
+    <div style={{ maxWidth: '500px', margin: '0 auto' }}>
       <PageHeader fixed />
       <h2 style={{ margin: '2em .5em' }}>Setup your account</h2>
       <div style={{ padding: '0 .5em'}}>

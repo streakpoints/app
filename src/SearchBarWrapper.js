@@ -72,6 +72,7 @@ const SearchBarWrapper = styled.div`
 
   & .search-bar__single-value {
     color: #000;
+    text-align: left;
   }
 
   /* Full width search */

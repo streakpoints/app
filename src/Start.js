@@ -20,7 +20,7 @@ function Start() {
         <div style={{ fontSize: '24px', fontWeight: 'bold', marginTop: '1em' }}>
           Tweet from your wallet&nbsp;<i className="fab fa-twitter" style={{ color: 'rgb(29, 161, 242)' }} />
         </div>
-        <div style={{ textTransform: 'uppercase', fontWeight: 'bold', color: 'rgb(153, 153, 153)', marginTop: '8px' }}>No sign-in needed</div>
+        <div style={{ textTransform: 'uppercase', fontWeight: 'bold', color: 'rgb(153, 153, 153)', marginTop: '8px' }}>No password needed</div>
         <div style={{ padding: '1em 0' }}>
           <PageHeader />
         </div>

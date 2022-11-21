@@ -16,14 +16,14 @@ function PageHeader(props) {
   return (
     <div style={{ paddingBottom: props.fixed ? '4em' : '0' }}>
       <div style={{ position: props.fixed ? 'absolute' : 'static', width: '100%', left: '0' }}>
-        <div className='flex' style={{ width: '100%', alignItems: 'center' }}>
+        <div className='flex' style={{ width: '100%', alignItems: 'center', maxWidth: '627px', margin: '0 auto' }}>
           {
             props.fixed &&
             <div className='flex-shrink' style={{ padding: '1em' }}>
               <Link style={{ textDecoration: 'none', fontSize: '1.5em' }} to='/'>🎤</Link>
             </div>
           }
-            <div className='flex-grow' style={{ textAlign: 'center', padding: props.fixed ? '0 1em' : '0' }}>
+            <div className='flex-grow' style={{ textAlign: 'left', padding: props.fixed ? '0 1em' : '0' }}>
               <SearchBarWrapper>
                 <AsyncSelect
                   cacheOptions={false}
