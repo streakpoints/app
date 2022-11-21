@@ -38,8 +38,7 @@ button:disabled {
   box-shadow: none;
 }
 body {
-  max-width: 500px;
-  padding: 1em;
+  padding: 0;
   margin: 0 auto;
 }
 
@@ -51,4 +50,18 @@ select {
   padding: 1em;
   font-family: Helvetica, sans-serif;
   border-radius: 12px;
+}
+
+.flex-grow {
+  -webkit-flex: 1 0 0;
+  flex: 1 0 0;
+}
+
+.flex-shrink {
+  -webkit-flex: 0 1 auto;
+  flex: 0 1 auto;
+}
+.flex {
+  display: -webkit-flex !important;
+  display: flex !important;
 }

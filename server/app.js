@@ -348,94 +348,6 @@ app.post('/-/api/twitter-account/rule', async (req, res) => {
   }
 });
 
-app.post('/-/api/tweet-token/uri', async (req, res) => {
-  const {
-    networkID,
-    authorizedTokenID,
-    authorizedAddress,
-    twitterAccountID,
-    tweetMessage
-  } = req.body;
-  try {
-    // 1. Check that the twitter account allows the specified address
-    const [twitterAccountRules] = await pool.query(
-      `
-      SELECT * FROM twitter_account_rule
-      WHERE twitter_account_id = ? AND eth_address IN (?, "*") AND is_allowed IS TRUE
-      `,
-      [ twitterAccountID, authorizedAddress ]
-    );
-    if (twitterAccountRules.length == 0) {
-      throw new Error('Collection Not Authorized');
-    }
-
-    // 2. Prepare the metadata
-    const broadcastIdentifier = await blockchain.getBroadcastIdentifier(authorizedAddress, authorizedTokenID, networkID);
-    const tokenName = `${broadcastIdentifier} ${new Date().toISOString().replace('T', ' ').split('.')[0]}`;
-    const tokenFrame = `https://embed-renderer.s3.us-west-2.amazonaws.com/721.html?${encodeURIComponent(tweetMessage)}`;
-
-    // 3. Generate the image of the post, store on IPFS
-    const imageUri = await textToImage.generate(tweetMessage, {
-      textAlign: 'left',
-      maxWidth: 500,
-      fontWeight: 'bold'
-    });
-    const imageForm = new FormData();
-    imageForm.append('file', Buffer.from(Base64.toUint8Array(imageUri.replace('data:image/png;base64,', ''))), {
-        filename: `token.png`,
-        contentType: 'image/png'
-    });
-    const imageUpload = await axios.post('https://api.pinata.cloud/pinning/pinFileToIPFS', imageForm, {
-      withCredentials: true,
-      maxContentLength: Infinity, //this is needed to prevent axios from erroring out with large files
-      maxBodyLength: Infinity,
-      headers: {
-        'Content-type': `multipart/form-data; boundary=${imageForm.getBoundary()}`,
-        'pinata_api_key': process.env.PINATA_API_KEY,
-        'pinata_secret_api_key': process.env.PINATA_API_SECRET,
-      }
-    });
-    const imageURI = `ipfs://${imageUpload.data.IpfsHash}`;
-
-    // 4. Store the actual post on IPFS
-    const animationForm = new FormData();
-    animationForm.append('file', media.generate721HTML(tokenFrame), { filename: 'token.html', contentType: 'text/html' });
-    const animationUpload = await axios.post('https://api.pinata.cloud/pinning/pinFileToIPFS', animationForm, {
-      withCredentials: true,
-      maxContentLength: Infinity, //this is needed to prevent axios from erroring out with large files
-      maxBodyLength: Infinity,
-      headers: {
-        'Content-type': `multipart/form-data; boundary=${animationForm.getBoundary()}`,
-        'pinata_api_key': process.env.PINATA_API_KEY,
-        'pinata_secret_api_key': process.env.PINATA_API_SECRET,
-      }
-    });
-    const animationURI = `ipfs://${animationUpload.data.IpfsHash}`;
-
-    // 5. Store the token metadata as a JSON on IPFS, referencing the html files just stored
-    const metadataUpload = await axios.post('https://api.pinata.cloud/pinning/pinJSONToIPFS', {
-      name: tokenName,
-      image: imageURI,
-      description: tweetMessage,
-      animation_url: animationURI,
-      external_url: 'https://721.am'
-    }, {
-      withCredentials: true,
-      headers: {
-        'pinata_api_key': process.env.PINATA_API_KEY,
-        'pinata_secret_api_key': process.env.PINATA_API_SECRET,
-      }
-    });
-    const tokenURI = `ipfs://${metadataUpload.data.IpfsHash}`;
-
-    jsonResponse(res, null, tokenURI);
-  }
-  catch (e) {
-    console.log(e.message);
-    jsonResponse(res, e);
-  }
-});
-
 app.post('/-/api/tweet-token', async (req, res) => {
   const {
     twitterAccountID,
@@ -474,7 +386,7 @@ app.post('/-/api/tweet-token', async (req, res) => {
       const banMatches = NFTGateRules.filter(r => (!r.is_allowed && r.token_id == authorizedTokenID));
       const allowAll = NFTGateRules.filter(r => (r.is_allowed && r.token_id == '*')).length > 0;
       if (banMatches.length > 0) {
-        // Token blocked. You can block if you "allow all" by default
+        // Token blocked. (You can block if you "allow all" by default)
         throw new Error('Token Blocked');
       }
       if (!allowAll && allowMatches.length == 0) {
@@ -498,52 +410,20 @@ app.post('/-/api/tweet-token', async (req, res) => {
     }
 
     /**
-     * 2. Validate and format the arguments passed in the message
-     */
-    const messageMemo = tweetMessage;
-    if (/^1[0-9]{1,2}.[0-9]{2}$/.test(royaltyRate) == false || parseFloat(royaltyRate) > 100.00) {
-      throw new Error('Invalid royalty');
-    }
-    const [
-      messageRoyaltyRateInteger,
-      messageRoyaltyRateDecimal
-    ] = royaltyRate.split('.');
-    const messageRoyaltyOwner = ethers.utils.getAddress(royaltyOwner); // Check address; throws if invalid
-    const messageTokenURI = tokenURI;
-    const message = (
-      tweetMessage
-      + '\n\n-------'
-      + '\n\nRoyalty Rate\n' + royaltyRate + '%'
-      + '\n\nRoyalty Owner\n' + royaltyOwner
-      + '\n\nToken Metadata\n' + tokenURI
-    );
-
-    /**
-     * 3. Verify the signature is valid and identify the owner/token
+     * 2. Verify the signature is valid and identify the owner/token
      */
     const broadcastIdentifier = await blockchain.verifyMessageSignatureAndOwner(
       authorizedAddress,
       authorizedTokenID,
       networkID,
-      message,
+      tweetMessage,
       messageSigner,
       messageSignature
     );
 
     /**
-     * 4. Generate the token ID, mirroring how it works in the smart contract
+     * 3. Validate the tweet
      */
-    const tweetHash = ethers.utils.keccak256(
-      ethers.utils.defaultAbiCoder.encode(
-        [ "address", "string" ],
-        [ messageSigner, messageTokenURI ]
-      )
-    );
-    const tokenID = ethers.BigNumber.from(
-      '0x' + tweetHash.slice(-16)
-    ).toString();
-
-
     let editedTweet = tweetMessage;
     // let hashtags = twitterValidator.extractHashtagsWithIndices(editedTweet);
     // for (let i = hashtags.length; i > 0; i--) {
@@ -563,7 +443,7 @@ app.post('/-/api/tweet-token', async (req, res) => {
     }
 
     /**
-     * 6. Grab the twitter credentials and tweet
+     * 4. Grab the twitter credentials and tweet
      */
     const [twitterAccountKeys] = await pool.query(
       `
@@ -578,14 +458,14 @@ app.post('/-/api/tweet-token', async (req, res) => {
       accessToken: twitterAccountKeys[0].access_key,
       accessSecret: twitterAccountKeys[0].access_secret
     });
-    // TEXT-MODE
+
     // const mediaID = await twitter.v1.uploadMedia(imageCapture.data, { type: 'png' });
     const tweet = await twitter.v2.tweet({
       text: editedTweet
     });
 
     /**
-     * 7. Save tweet_token to database
+     * 5. Save tweet_token to database
      */
     await pool.query(
       `
@@ -608,44 +488,17 @@ app.post('/-/api/tweet-token', async (req, res) => {
         twitterAccountID,
         authorizedTokenID,
         authorizedAddress,
-        tokenID,
-        tokenURI,
+        '-',
+        '-',
         tweetMessage,
-        royaltyRate,
-        messageRoyaltyOwner,
+        0,
+        '-',
         messageSigner,
         messageSignature
       ]
     );
 
     jsonResponse(res, null, tweet.data.id);
-
-    try {
-      /**
-       * 8. Submit transaction to the blockchain
-       */
-      const txnID = await blockchain.mint(
-        process.env.BICONOMY_API_KEY,
-        messageMemo,
-        messageRoyaltyRateInteger,
-        messageRoyaltyRateDecimal,
-        messageRoyaltyOwner,
-        messageTokenURI,
-        messageSignature
-      );
-      await pool.query(
-        `
-        UPDATE tweet_token
-        SET token_txid = ?
-        WHERE tweet_id = ?
-        `,
-        [ txnID, tweet.data.id]
-      );
-    }
-    catch (e) {
-      console.log('Error Minting: ' + e.message);
-    }
-
   }
   catch (e) {
     console.log(e.message);

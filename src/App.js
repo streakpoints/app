@@ -10,13 +10,15 @@ import {
 
 function App() {
   return (
-    <Router>
-      <Switch>
-        <Route path='/i' component={Setup} />
-        <Route exact path='/' component={Start} />
-        <Route path='/:handle?' component={Tweet} />
-      </Switch>
-    </Router>
+    <div style={{ position: 'relative' }}>
+      <Router>
+        <Switch>
+          <Route path='/i' component={Setup} />
+          <Route exact path='/' component={Start} />
+          <Route path='/:handle?' component={Tweet} />
+        </Switch>
+      </Router>
+    </div>
   );
 }
 

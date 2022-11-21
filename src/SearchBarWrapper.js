@@ -9,7 +9,8 @@ const SearchBarWrapper = styled.div`
     border: 1px solid #ccc !important;
     border-radius: 12px;
     box-shadow: none;
-    background-color: transparent;
+    background-color: rgb(238, 238, 238);
+    font-size: 16px;
   }
   & .search-bar__control {
     min-height: unset;
@@ -39,7 +40,6 @@ const SearchBarWrapper = styled.div`
   }
   & .search-bar__multi-value__label {
     color: #000;
-    font-size: 1em;
     padding: 0;
 
     /* text-align: center using CSS transforms 1/2*/
@@ -50,6 +50,7 @@ const SearchBarWrapper = styled.div`
 
   /* Dropdown */
   & .search-bar__menu {
+    font-size: 16px;
     margin-bottom: 4em;
     background-color: #fafafa;
     border-radius: 12px;
