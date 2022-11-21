@@ -107,7 +107,7 @@ function Tweet(props) {
     <div style={{ maxWidth: '500px', margin: '0 auto' }}>
       <div style={{ padding: '0 .5em' }}>
         <PageHeader fixed />
-        <h2>Tweet as @{handle}</h2>
+        <h2>Tweet as <Link to={`https://twitter.com/${handle}`}>@{handle}</Link></h2>
         <textarea
           maxlength="200"
           placeholder="message"
