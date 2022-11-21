@@ -488,7 +488,7 @@ app.post('/-/api/tweet-token', async (req, res) => {
         twitterAccountID,
         authorizedTokenID,
         authorizedAddress,
-        '-',
+        tweet.data.id,
         '-',
         tweetMessage,
         0,
