@@ -107,6 +107,7 @@ function Tweet(props) {
     <div style={{ maxWidth: '500px', margin: '0 auto' }}>
       <div style={{ padding: '0 .5em' }}>
         <PageHeader fixed />
+        <h2>Tweet as @{handle}</h2>
         <textarea
           maxlength="200"
           placeholder="message"
@@ -125,7 +126,7 @@ function Tweet(props) {
             Tweet
           </button>
         </div>
-        <h2>Who has access?</h2>
+        <h2>Who can tweet?</h2>
         <div>
           {
             addresses.length > 0 ? (
@@ -149,10 +150,13 @@ function Tweet(props) {
                     <div><b>Blocked tokens:</b> { blockedTokenIDs.join(', ')}</div>
                   </div>
                 }
+                <div style={{ paddingBottom: '1em' }}>
+                  <Link to='/i'>Manage</Link> access to this account.
+                </div>
               </div>
             ) : (
               <div>
-                This account isn&apos;t set up yet. <Link to='/i'>Set it up now</Link>
+                This account isn&apos;t set up yet. <Link to='/i'>Setup your account</Link>
               </div>
             )
           }

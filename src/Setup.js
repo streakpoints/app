@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { ethers } from 'ethers';
 import * as data from './data';
 import PageHeader from './PageHeader';
@@ -108,7 +109,7 @@ function Setup() {
         <div>
           {
             userID ? (
-              <div>Logged in as <a href={`/${userName}`}>@{userName}</a>. To switch accounts, <a href='/' onClick={() => data.logout()}>logout</a>.</div>
+              <div>Logged in as <Link to={`/${userName}`}>@{userName}</Link>. To switch accounts, <a href='/' onClick={() => data.logout()}>logout</a>.</div>
             ) : (
               <button onClick={data.login}>Login with Twitter</button>
             )

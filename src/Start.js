@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 
 import PageHeader from './PageHeader';
 import TweetEmbed from './TweetEmbed';
@@ -24,7 +25,7 @@ function Start() {
         <div style={{ padding: '1em 0' }}>
           <PageHeader />
         </div>
-        {/*<p><a target='_blank' rel='noreferrer' href='https://docs.google.com/document/d/1x0KF0fKu6pSgdcBtqAn5UGuyEWrd2_Kt1UYDfC_2OsA/edit?usp=sharing'>FAQ.</a></p>*/}
+        <p style={{ textAlign: 'right' }}><Link to='/i'>Setup your account →</Link></p>
         <br />
       </div>
       <div style={{ padding: '0 2em', maxWidth: '500px', margin: '0 auto' }}>
