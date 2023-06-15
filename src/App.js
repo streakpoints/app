@@ -1,5 +1,3 @@
-import Tweet from './Tweet';
-import Setup from './Setup';
 import Start from './Start';
 import './App.css';
 import {
@@ -13,9 +11,7 @@ function App() {
     <div style={{ position: 'relative' }}>
       <Router>
         <Switch>
-          <Route path='/i' component={Setup} />
           <Route exact path='/' component={Start} />
-          <Route path='/:handle?' component={Tweet} />
         </Switch>
       </Router>
     </div>

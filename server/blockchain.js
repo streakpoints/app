@@ -1,88 +1,36 @@
-const Biconomy = require('@biconomy/mexa').Biconomy;
 const ethers = require('ethers');
-const { signTypedData, SignTypedDataVersion } = require('@metamask/eth-sig-util');
-const abi721 = require('./721-abi.json');
-const abiID = require('./id-abi.json');
+const abi = [{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":true,"internalType":"address","name":"approved","type":"address"},{"indexed":true,"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"Approval","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":true,"internalType":"address","name":"operator","type":"address"},{"indexed":false,"internalType":"bool","name":"approved","type":"bool"}],"name":"ApprovalForAll","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"from","type":"address"},{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":true,"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"Transfer","type":"event"},{"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"approve","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"owner","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"balance","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"getApproved","outputs":[{"internalType":"address","name":"operator","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"operator","type":"address"}],"name":"isApprovedForAll","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"name","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"ownerOf","outputs":[{"internalType":"address","name":"owner","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"from","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"safeTransferFrom","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"from","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"tokenId","type":"uint256"},{"internalType":"bytes","name":"data","type":"bytes"}],"name":"safeTransferFrom","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"operator","type":"address"},{"internalType":"bool","name":"_approved","type":"bool"}],"name":"setApprovalForAll","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"bytes4","name":"interfaceId","type":"bytes4"}],"name":"supportsInterface","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"symbol","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"tokenURI","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"from","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"transferFrom","outputs":[],"stateMutability":"nonpayable","type":"function"}];
 
-const networkID = 1;
-const infuraAccessToken = 'e8e7334c5daa415489ab1df636995565';
-const TOKENS = {
-  CryptoPunks: '0xb47e3cd837ddf8e4c57f05d70ab865de6e193bbb'
-};
+
+const etherProvider = new ethers.providers.AlchemyProvider(1, process.env.ALCHEMY_ETHEREUM_KEY);
+const maticProvider = new ethers.providers.AlchemyProvider(137, process.env.ALCHEMY_POLYGON_KEY);
 
 const getProvider = networkID => {
   if (networkID == 1) {
-    return new ethers.providers.InfuraProvider(networkID, infuraAccessToken);
-  }
-  else if (networkID == 137) {
-    return new ethers.providers.JsonRpcProvider('https://polygon-rpc.com/', {
-      name: 'Matic',
-      chainId: 137
-    });
+    return etherProvider;
+  } else if (networkID == 137) {
+    return maticProvider;
+  } else {
+    throw new Error('Invalid network');
   }
 };
 
-const getBiconomy = async (provider, apiKey) => {
-  return new Promise((resolve, reject) => {
-    const biconomy = new Biconomy(provider, {
-      apiKey,
-      debug: true
-    });
-    biconomy.onEvent(biconomy.READY, () => {
-      resolve(biconomy);
-    }).onEvent(biconomy.ERROR, (error, message) => {
-      reject(error);
-    });
-  });
-}
-
 const getContract = (address, provider) => {
-  return new ethers.Contract(address, abi721, provider);
+  return new ethers.Contract(address, abi, provider);
 };
 
 const getAddressFallback = address => `${address.substr(0, 6)}...${address.substr(-4)}`;
 
-const verifyMessageSignatureAndOwner = async (tokenContract, tokenID, networkID, message, signer, signature) => {
-  const recoveredSigner = ethers.utils.verifyMessage(message, signature);
-  if (recoveredSigner != signer) {
-    throw new Error('invalid signature');
-  }
-  if (tokenID) {
-    const provider = getProvider(networkID);
-    const zContract = getContract(tokenContract, provider);
-    const owner = tokenContract == TOKENS.CryptoPunks ? (
-      await zContract.punkIndexToAddress(tokenID)
-    ) : (
-      await zContract.ownerOf(tokenID)
-    );
-    if (owner != signer) {
-      throw new Error('not owner');
-    }
-    const symbol = await zContract.symbol();
-    return `${symbol || getAddressFallback(signer)} #${tokenID}`;
-  }
-  else {
-    const ensName = await getENS(signer);
-    if (ensName) {
-      return ensName;
-    }
-    return getAddressFallback(signer);
-  }
+const recoverSigner = (message, signature) => {
+  return ethers.utils.verifyMessage(message, signature);
 };
 
-const getBroadcastIdentifier = async (address, tokenID, networkID) => {
-  if (tokenID) {
-    const provider = getProvider(networkID);
-    const zContract = getContract(address, provider);
-    const symbol = await zContract.symbol();
-    return `${symbol || getAddressFallback(address)} #${tokenID}`;
-  }
-  else {
-    const ensName = await getENS(address);
-    if (ensName) {
-      return ensName;
-    }
-    return getAddressFallback(address);
+const verifyUserIsOwner = async (contractAddress, networkID, userAddress) => {
+  const provider = getProvider(networkID);
+  const contract = getContract(contractAddress, provider);
+  const balance = await contract.balanceOf(userAddress);
+  if (balance == 0) {
+    throw new Error('Unable to verify ownership');
   }
 };
 
@@ -92,61 +40,76 @@ const getENS = async (address) => {
   return name;
 };
 
-const mint = async (
-  biconomyApiKey,
-  messageMemo,
-  messageRoyaltyRateInteger,
-  messageRoyaltyRateDecimal,
-  messageRoyaltyOwner,
-  messageTokenURI,
-  messageSignature
-) => {
-  const contractInterface = new ethers.utils.Interface(abiID);
-  const functionSignature = contractInterface.encodeFunctionData('mintFromSignature', [
-    messageMemo,
-    messageRoyaltyRateInteger,
-    messageRoyaltyRateDecimal,
-    messageRoyaltyOwner,
-    messageTokenURI,
-    messageSignature
-  ]);
+const transferEvents = new ethers.utils.Interface([
+  'event Transfer(address indexed _from, address indexed _to, uint256 _tokenId)',
+  'event TransferSingle(address indexed operator, address indexed from, address indexed to, uint256 id, uint256 value)',
+  'event TransferBatch(address indexed operator, address indexed from, address indexed to, uint256[] ids, uint256[] values)'
+]);
 
-  const provider = getProvider(137);
-  const biconomy = await getBiconomy(provider, biconomyApiKey);
-  const biconomyProvider = biconomy.getEthersProvider();
+// ERC20 & ERC721 (721 has last topic indexed, but signature is the same)
+const ERC20_721 = transferEvents.getEventTopic('Transfer(address indexed, address indexed, uint256 indexed)');
 
-  const metaWallet = ethers.Wallet.createRandom();
-  const sender = await metaWallet.getAddress();
-  const signedTx = await metaWallet.signTransaction({
-    to: '0x6Ea6c2B23c20db0F6024D39C5F61C56c4AB4E5F1',
-    data: functionSignature,
-    from: sender
+const getMints = async (chainID, lastBlock) => {
+  const provider = getProvider(chainID);
+  const endBlock = await provider.getBlockNumber();
+  const maxLookBackBlocks = chainID == 1 ? 10 : 50;
+  const startBlock = Math.max(endBlock - maxLookBackBlocks, lastBlock + 1);
+
+  const logs = await provider.getLogs({
+    topics: [
+      [
+        ERC20_721,
+      ],
+      null,
+      null,
+      null // The presence of this last topic (as null) filters out erc20 events in some geth versions
+    ],
+    fromBlock: startBlock,
+    toBlock: endBlock
   });
-  const forwardData = await biconomy.getForwardRequestAndMessageToSign(signedTx);
-
-  const signature = signTypedData({
-    privateKey: ethers.utils.arrayify(metaWallet.privateKey),
-    data: forwardData.eip712Format,
-    version: SignTypedDataVersion.V3
+  const mints = [];
+  logs.forEach(l => {
+    const sig = l.topics[0];
+    if (sig == ERC20_721 && l.topics.length == 4) {
+      if (
+        `0x${l.topics[1].slice(-40)}` == '0x0000000000000000000000000000000000000000'
+      ) {
+        mints.push({
+          contract: l.address.toLowerCase(),
+          recipient: `0x${l.topics[2].slice(-40).toLowerCase()}`,
+          tokenID: ethers.BigNumber.from(l.topics[3]).toString(),
+          blockNum: l.blockNumber,
+        });
+      }
+    }
   });
-  const txnID = await biconomyProvider.send('eth_sendRawTransaction', [{
-    signature,
-    gasLimit: (Number(forwardData.request.txGas) + 100000).toString(),
-    forwardRequest: forwardData.request,
-    rawTransaction: signedTx,
-    signatureType: biconomy.EIP712_SIGN
-  }]);
 
-  if (!txnID || txnID.length == 0) {
-    throw new Error('Invalid txn id');
-  }
-  return txnID;
-};
+  console.log(`CHAIN: ${chainID}\tMINTS: ${mints.length}\tSTART: ${startBlock}\tEND: ${endBlock}`);
+
+  return mints;
+}
+
+const getCollections = async (chainID, addresses) => {
+  const provider = getProvider(chainID);
+  const collections = await Promise.all(addresses.map(async (address) => {
+    const contract = getContract(address, provider);
+    try {
+      const name = await contract.name();
+      return {
+        contract: address,
+        name,
+      }
+    } catch (e) {
+      return null;
+    }
+  }));
+  return collections.filter(c => c != null);
+}
 
 module.exports = {
-  verifyMessageSignatureAndOwner,
-  getBroadcastIdentifier,
+  recoverSigner,
+  verifyUserIsOwner,
   getENS,
-  mint
+  getMints,
+  getCollections,
 };
-
