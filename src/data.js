@@ -1,12 +1,18 @@
 import axios from 'axios';
 import { stringify } from 'qs';
 
-axios.defaults.withCredentials = true;
+// axios.defaults.withCredentials = true;
 
 const BASE_URL = window.location.href.indexOf('http://localhost:') === 0 ? 'http://localhost:8000/-/api' : '/-/api';
 
 export const getFeed = async params => {
   const response = await axios.get(`${BASE_URL}/feed`, { params });
+  return response.data.results;
+}
+
+
+export const getTokens = async params => {
+  const response = await axios.get(`${BASE_URL}/tokens`, { params });
   return response.data.results;
 }
 

@@ -93,19 +93,19 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static('build'));
 
 app.get('/-/api/feed', async (req, res) => {
-  const chain = parseInt(req.query.chain) || 0;
+  const chain = parseInt(req.query.chain) || 1;
   const range = parseInt(req.query.range) || 1440;
   const limit = Math.min(parseInt(req.query.limit) || 10, 100);
   const offset = parseInt(req.query.offset) || 0;
   const [mints] = await pool.query(
     `
-    SELECT contract_address, COUNT(*) AS total
+    SELECT contract_address, COUNT(DISTINCT recipient) AS total
     FROM mint
     WHERE
-      chain_id ${chain ? '=' : '!='} ? AND
+      chain_id = ? AND
       create_time > DATE_SUB(NOW(), INTERVAL ? MINUTE)
     GROUP BY contract_address
-    ORDER BY COUNT(*) DESC
+    ORDER BY total DESC
     LIMIT ?,?
     `,
     [
@@ -135,6 +135,48 @@ app.get('/-/api/feed', async (req, res) => {
     });
   }
 });
+
+app.get('/-/api/tokens', async (req, res) => {
+  const chain = parseInt(req.query.chain) || 0;
+  const contractAddress = req.query.contractAddress;
+  const limit = Math.min(parseInt(req.query.limit) || 10, 100);
+  const offset = parseInt(req.query.offset) || 0;
+  const [mints] = await pool.query(
+    `
+    SELECT *
+    FROM mint
+    WHERE chain_id = ? AND contract_address = ? AND token_uri IS NOT NULL
+    ORDER BY create_time DESC
+    LIMIT ?,?
+    `,
+    [
+      chain,
+      contractAddress,
+      offset,
+      limit
+    ]
+  );
+  if (mints.length == 0) {
+    jsonResponse(res, null, {
+      mints: [],
+      collections: [],
+    });
+  } else {
+    const [collections] = await pool.query(
+      `
+      SELECT *
+      FROM collection
+      WHERE contract_address IN (${`,?`.repeat(mints.length).slice(1)})
+      `,
+      mints.map(m => m.contract_address),
+    );
+    jsonResponse(res, null, {
+      mints,
+      collections,
+    });
+  }
+});
+
 
 
 app.get('/-/api/status', async (req, res) => {
@@ -187,15 +229,17 @@ const scheduledJob = schedule.scheduleJob(CRON_30S, function () {
             chain_id,
             contract_address,
             token_id,
+            token_uri,
             recipient,
             block_num
-          ) VALUES ${`,(?,?,?,?,?)`.repeat(tokens.length).slice(1)}
+          ) VALUES ${`,(?,?,?,?,?,?)`.repeat(tokens.length).slice(1)}
           ON DUPLICATE KEY UPDATE id=id
           `,
           tokens.reduce((acc, val) => acc.concat([
             chainID,
             val.contract,
             val.tokenID,
+            val.tokenURI,
             val.recipient,
             val.blockNum,
           ]), [])

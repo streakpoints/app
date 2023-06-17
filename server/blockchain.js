@@ -51,10 +51,13 @@ const ERC20_721 = transferEvents.getEventTopic('Transfer(address indexed, addres
 
 const getMints = async (chainID, lastBlock) => {
   const provider = getProvider(chainID);
-  const endBlock = await provider.getBlockNumber();
   const maxLookBackBlocks = chainID == 1 ? 10 : 50;
+  const offsetBlocksFromTip = chainID == 1 ? 1 : 5;
+  const endBlock = await provider.getBlockNumber() - offsetBlocksFromTip;
   const startBlock = Math.max(endBlock - maxLookBackBlocks, lastBlock + 1);
-
+  if (startBlock > endBlock) {
+    return [];
+  }
   const logs = await provider.getLogs({
     topics: [
       [
@@ -67,14 +70,14 @@ const getMints = async (chainID, lastBlock) => {
     fromBlock: startBlock,
     toBlock: endBlock
   });
-  const mints = [];
+  const tokens = [];
   logs.forEach(l => {
     const sig = l.topics[0];
     if (sig == ERC20_721 && l.topics.length == 4) {
       if (
         `0x${l.topics[1].slice(-40)}` == '0x0000000000000000000000000000000000000000'
       ) {
-        mints.push({
+        tokens.push({
           contract: l.address.toLowerCase(),
           recipient: `0x${l.topics[2].slice(-40).toLowerCase()}`,
           tokenID: ethers.BigNumber.from(l.topics[3]).toString(),
@@ -84,7 +87,20 @@ const getMints = async (chainID, lastBlock) => {
     }
   });
 
-  console.log(`CHAIN: ${chainID}\tMINTS: ${mints.length}\tSTART: ${startBlock}\tEND: ${endBlock}`);
+  const mints = (await Promise.all(tokens.map(async (token) => {
+    try {
+      const contract = getContract(token.contract, provider);
+      const tokenURI = await contract.tokenURI(token.tokenID);
+      if (tokenURI.length > 0 && tokenURI.length < 65_536) {
+        token.tokenURI = tokenURI;
+      }
+      return token;
+    } catch (e) {
+      return null;
+    }
+  }))).filter(m => m !== null);
+
+  console.log(`CHAIN: ${chainID}\tMINTS: ${mints.length}\tSKIPPED: ${tokens.length - mints.length}\tBLOCKS: ${1 + endBlock - startBlock}`);
 
   return mints;
 }
