@@ -105,6 +105,20 @@ const getMints = async (chainID, lastBlock) => {
   return mints;
 }
 
+const getTokenURI = async (chainID, contractAddress, tokenID) => {
+  try {
+    const provider = getProvider(chainID);
+    const contract = getContract(contractAddress, provider);
+    const tokenURI = await contract.tokenURI(tokenID);
+    if (tokenURI.length > 0 && tokenURI.length < 65_536) {
+      return tokenURI;
+    }
+    return null;
+  } catch (e) {
+    return null;
+  }
+};
+
 const getCollections = async (chainID, addresses) => {
   const provider = getProvider(chainID);
   const collections = await Promise.all(addresses.map(async (address) => {
@@ -127,5 +141,6 @@ module.exports = {
   verifyUserIsOwner,
   getENS,
   getMints,
+  getTokenURI,
   getCollections,
 };

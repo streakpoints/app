@@ -192,6 +192,38 @@ app.listen(port, () => {
   console.log(`Server listening on port ${port}`)
 });
 
+//*
+(async () => {
+  const [result] = await pool.query(
+    `
+    SELECT id, chain_id, contract_address, token_id
+    FROM mint
+    WHERE token_uri IS NULL
+    `
+  );
+  let i = 0;
+  for (const row of result) {
+    if (++i % 1_000 == 0) {
+      console.log('LOOP >>>', i);
+    }
+    const tokenURI = await blockchain.getTokenURI(row.chain_id, row.contract_address, row.token_id);
+    if (tokenURI) {
+      await pool.query(
+        `
+        UPDATE mint
+        SET token_uri = ?
+        WHERE id = ?
+        `,
+        [
+          tokenURI,
+          row.id
+        ]
+      );
+    }
+  }
+})();
+//*/
+
 const CRON_30S = '*/30 * * * * *';
 const scheduledJob = schedule.scheduleJob(CRON_30S, function () {
   [1, 137].forEach(async (chainID) => {
