@@ -52,7 +52,7 @@ function Collection(props) {
       setMints(mintsWithMetadata);
       setCollections(r.collections);
     });
-  });
+  }, [chain, contractAddress]);
 
   const loadMore = () => {
     data.getTokens({
