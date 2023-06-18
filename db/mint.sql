@@ -10,5 +10,6 @@ CREATE TABLE `mint` (
 
     PRIMARY KEY (`id`),
     UNIQUE KEY `one_of` (`chain_id`, `contract_address`, `token_id`),
-    KEY (`block_num`)
+    KEY (`block_num`),
+    KEY (`create_time`)
 );
