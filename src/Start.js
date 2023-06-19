@@ -53,7 +53,7 @@ function Start(props) {
     <div>
       <div style={{ padding: '2em 1em', maxWidth: '500px', margin: '0 auto' }}>
         <div style={{ fontSize: '24px', fontWeight: 'bold', marginTop: '1em' }}>
-          🏄‍♂️&nbsp;&nbsp;Collector Charts
+          🏄‍♂️&nbsp;&nbsp;Collection Charts
         </div>
       </div>
       <div style={{ maxWidth: '500px', margin: '0 auto', paddingBottom: '2em' }}>
