@@ -93,29 +93,38 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static('build'));
 
+const chainIDs = [1, 137];
+const mintCache = {};
+chainIDs.forEach(chainID => mintCache[chainID] = {});
+
 app.get('/-/api/feed', async (req, res) => {
   const chain = parseInt(req.query.chain) || 1;
-  const range = parseInt(req.query.range) || 1440;
   const limit = Math.min(parseInt(req.query.limit) || 10, 100);
   const offset = parseInt(req.query.offset) || 0;
-  const [mints] = await pool.query(
-    `
-    SELECT contract_address, COUNT(DISTINCT recipient) AS total
-    FROM mint
-    WHERE
-      chain_id = ? AND
-      create_time > DATE_SUB(NOW(), INTERVAL ? MINUTE)
-    GROUP BY contract_address
-    ORDER BY total DESC
-    LIMIT ?,?
-    `,
-    [
-      chain,
-      range,
-      offset,
-      limit
-    ]
-  );
+  const range = req.query.range;
+  let rangeMinutes = null;
+  switch (range) {
+    case 'minute':
+      rangeMinutes = 1;
+      break;
+    case 'hour':
+      rangeMinutes = 60;
+      break;
+    case 'day':
+      rangeMinutes = 60 * 24;
+      break;
+    case 'week':
+      rangeMinutes = 60 * 24 * 7;
+      break;
+    default:
+      jsonResponse(res, new Error('Invalid Range'));
+      return;
+  }
+  if (chainIDs.indexOf(chain) < 0) {
+    jsonResponse(res, new Error('Invalid Chain'));
+    return;
+  }
+  const mints = (mintCache[chain][rangeMinutes] || []).slice(offset, offset + limit);
   if (mints.length == 0) {
     jsonResponse(res, null, {
       mints: [],
@@ -224,10 +233,10 @@ app.listen(port, () => {
 })();
 //*/
 
-const CRON_30S = '*/30 * * * * *';
-const scheduledJob = schedule.scheduleJob(CRON_30S, function () {
-  [1, 137].forEach(async (chainID) => {
+const scanChains = () => {
+  chainIDs.forEach(async (chainID) => {
     try {
+      const start = new Date().getTime() / 1000;
       const [result] = await pool.query(
         `
         SELECT COALESCE(MAX(block_num), 0) AS last_block
@@ -277,10 +286,38 @@ const scheduledJob = schedule.scheduleJob(CRON_30S, function () {
             val.blockNum,
           ]), [])
         );
+        const ranges = [
+          1,
+          60,
+          60 * 24,
+          60 * 24 * 7
+        ];
+        for (const range of ranges) {
+          const [results] = await pool.query(
+            `
+            SELECT contract_address, COUNT(DISTINCT recipient) AS total
+            FROM mint
+            WHERE
+              chain_id = ? AND
+              create_time > DATE_SUB(NOW(), INTERVAL ? MINUTE)
+            GROUP BY contract_address
+            ORDER BY total DESC
+            `,
+            [
+              chainID,
+              range
+            ]
+          );
+          mintCache[chainID][range] = results;
+        }
       }
+      const end = new Date().getTime() / 1000;
+      console.log(`CHAIN: ${chainID}\tTIME: ${(end - start).toFixed(3)}`);
     } catch (e) {
       console.log(`CRON ERROR CHAIN ${chainID}: ${e.message}`);
     }
   });
-});
+};
 
+const CRON_30S = '*/30 * * * * *';
+const scheduledJob = schedule.scheduleJob(CRON_30S, scanChains);

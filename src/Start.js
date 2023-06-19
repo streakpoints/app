@@ -5,7 +5,7 @@ import * as data from './data';
 function Start(props) {
   const [mints, setMints] = useState([]);
   const [collections, setCollections] = useState([]);
-  const [range, setRange] = useState(60 * 24);
+  const [range, setRange] = useState('day');
   const [chain, setChain] = useState(parseInt(props.match.params.chain) || 1);
   const [hasMore, setHasMore] = useState(false);
   const limit = 30;
@@ -63,15 +63,14 @@ function Start(props) {
           <div className='flex-grow'></div>
           <div className='flex-shrink' style={{ paddingRight: '.25em' }}>
             <select onChange={(e) => changeRange(e.target.value)}>
-              <option value={1}>Minute</option>
-              <option value={60}>Hour</option>
-              <option selected value={60 * 24}>Day</option>
-              <option value={60 * 24 * 7}>Week</option>
-              <option value={60 * 24 * 7 * 30}>Month</option>
+              <option value='minute'>Minute</option>
+              <option value='hour'>Hour</option>
+              <option selected value='day'>Day</option>
+              <option value='week'>Week</option>
             </select>
           </div>
         </div>
-        <div style={{ padding: '.5em 1em' }}>
+        <div style={{ padding: '.5em 1.5em' }}>
           <ol style={{ paddingInlineStart: '1em' }}>
             {
               mints.map(mint => {

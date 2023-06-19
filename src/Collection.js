@@ -48,9 +48,9 @@ function Collection(props) {
       offset: 0,
     }).then(async r => {
       setHasMore(r.mints.length > 0);
+      setCollections(r.collections);
       const mintsWithMetadata = await Promise.all(r.mints.map(addMetadataToMint));
       setMints(mintsWithMetadata);
-      setCollections(r.collections);
     });
   }, [chain, contractAddress]);
 
@@ -63,9 +63,7 @@ function Collection(props) {
     }).then(async r => {
       setHasMore(r.mints.length > 0);
       const mintsWithMetadata = await Promise.all(r.mints.map(addMetadataToMint));
-
       setMints(mints.concat(mintsWithMetadata));
-      setCollections(collections.concat(r.collections));
     });
   };
 
