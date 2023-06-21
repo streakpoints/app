@@ -302,6 +302,7 @@ const scanChains = () => {
               create_time > DATE_SUB(NOW(), INTERVAL ? MINUTE)
             GROUP BY contract_address
             ORDER BY total DESC
+            LIMIT 300
             `,
             [
               chainID,
