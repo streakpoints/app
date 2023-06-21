@@ -66,7 +66,6 @@ function Start(props) {
               <option value='minute'>Minute</option>
               <option value='hour'>Hour</option>
               <option selected value='day'>Day</option>
-              <option value='week'>Week</option>
             </select>
           </div>
         </div>
