@@ -290,27 +290,35 @@ const scanChains = () => {
           1,
           60,
           60 * 24,
-          60 * 24 * 7
+          // 60 * 24 * 7
         ];
-        for (const range of ranges) {
-          const [results] = await pool.query(
-            `
-            SELECT contract_address, COUNT(DISTINCT recipient) AS total
-            FROM mint
-            WHERE
-              chain_id = ? AND
-              create_time > DATE_SUB(NOW(), INTERVAL ? MINUTE)
-            GROUP BY contract_address
-            ORDER BY total DESC
-            LIMIT 300
-            `,
-            [
-              chainID,
-              range
-            ]
-          );
-          mintCache[chainID][range] = results;
+        if (!mintCache[chainID]['lock']) {
+          mintCache[chainID]['lock'] = true;
+          for (const range of ranges) {
+            try {
+              const [results] = await pool.query(
+                `
+                SELECT contract_address, COUNT(DISTINCT recipient) AS total
+                FROM mint
+                WHERE
+                  chain_id = ? AND
+                  create_time > DATE_SUB(NOW(), INTERVAL ? MINUTE)
+                GROUP BY contract_address
+                ORDER BY total DESC
+                LIMIT 300
+                `,
+                [
+                  chainID,
+                  range
+                ]
+              );
+              mintCache[chainID][range] = results;
+            } catch (e) {
+              break;
+            }
+          }
         }
+        mintCache[chainID]['lock'] = false;
       }
       const end = new Date().getTime() / 1000;
       console.log(`CHAIN: ${chainID}\tTIME: ${(end - start).toFixed(3)}`);
@@ -320,5 +328,5 @@ const scanChains = () => {
   });
 };
 
-const CRON_30S = '*/30 * * * * *';
-const scheduledJob = schedule.scheduleJob(CRON_30S, scanChains);
+const CRON_MIN = '* * * * *';
+const scheduledJob = schedule.scheduleJob(CRON_MIN, scanChains);
