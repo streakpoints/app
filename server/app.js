@@ -233,8 +233,8 @@ app.listen(port, () => {
 })();
 //*/
 
-const scanChains = () => {
-  chainIDs.forEach(async (chainID) => {
+const scanChains = async () => {
+  await Promise.all(chainIDs.map(async (chainID) => {
     try {
       const start = new Date().getTime() / 1000;
       const [result] = await pool.query(
@@ -286,46 +286,51 @@ const scanChains = () => {
             val.blockNum,
           ]), [])
         );
-        const ranges = [
-          1,
-          60,
-          60 * 24,
-          // 60 * 24 * 7
-        ];
-        if (!mintCache[chainID]['lock']) {
-          mintCache[chainID]['lock'] = true;
-          for (const range of ranges) {
-            try {
-              const [results] = await pool.query(
-                `
-                SELECT contract_address, COUNT(DISTINCT recipient) AS total
-                FROM mint
-                WHERE
-                  chain_id = ? AND
-                  create_time > DATE_SUB(NOW(), INTERVAL ? MINUTE)
-                GROUP BY contract_address
-                ORDER BY total DESC
-                LIMIT 300
-                `,
-                [
-                  chainID,
-                  range
-                ]
-              );
-              mintCache[chainID][range] = results;
-            } catch (e) {
-              break;
-            }
-          }
-        }
-        mintCache[chainID]['lock'] = false;
       }
       const end = new Date().getTime() / 1000;
-      console.log(`CHAIN: ${chainID}\tTIME: ${(end - start).toFixed(3)}`);
+      console.log(`CHAIN: ${chainID}\tCREATED IN: ${(end - start).toFixed(3)}`);
     } catch (e) {
       console.log(`CRON ERROR CHAIN ${chainID}: ${e.message}`);
     }
-  });
+  }));
+  for (const chainID of chainIDs) {
+    const ranges = [
+      1,
+      60,
+      60 * 24,
+      // 60 * 24 * 7
+    ];
+    if (!mintCache[chainID]['lock']) {
+      const start = new Date().getTime() / 1000;
+      mintCache[chainID]['lock'] = true;
+      for (const range of ranges) {
+        try {
+          const [results] = await pool.query(
+            `
+            SELECT contract_address, COUNT(DISTINCT recipient) AS total
+            FROM mint
+            WHERE
+              chain_id = ? AND
+              create_time > DATE_SUB(NOW(), INTERVAL ? MINUTE)
+            GROUP BY contract_address
+            ORDER BY total DESC
+            LIMIT 300
+            `,
+            [
+              chainID,
+              range
+            ]
+          );
+          mintCache[chainID][range] = results;
+        } catch (e) {
+          break;
+        }
+      }
+      const end = new Date().getTime() / 1000;
+      console.log(`CHAIN: ${chainID}\tQUERIED IN: ${(end - start).toFixed(3)}`);
+    }
+    mintCache[chainID]['lock'] = false;
+  }
 };
 
 const CRON_MIN = '* * * * *';
