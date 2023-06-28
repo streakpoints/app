@@ -288,7 +288,7 @@ const scanChains = async () => {
         );
       }
       const end = new Date().getTime() / 1000;
-      console.log(`CHAIN: ${chainID}\tCREATED IN: ${(end - start).toFixed(3)}`);
+      console.log(`CHAIN: ${chainID}\tINDEXED IN: ${(end - start).toFixed(3)}`);
     } catch (e) {
       console.log(`CRON ERROR CHAIN ${chainID}: ${e.message}`);
     }
@@ -298,7 +298,6 @@ const scanChains = async () => {
 const genFeeds = async () => {
   for (const chainID of chainIDs) {
     const ranges = [
-      // 1,
       60,
       60 * 24,
       60 * 24 * 7
@@ -329,7 +328,7 @@ const genFeeds = async () => {
       }
     }
     const end = new Date().getTime() / 1000;
-    console.log(`CHAIN: ${chainID}\tMADE IN: ${(end - start).toFixed(3)}`);
+    console.log(`CHAIN: ${chainID}\tRANKED IN: ${(end - start).toFixed(3)}`);
   }
 };
 

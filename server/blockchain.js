@@ -58,6 +58,7 @@ const getMints = async (chainID, lastBlock) => {
   if (startBlock > endBlock) {
     return [];
   }
+  const start = new Date().getTime() / 1000;
   const logs = await provider.getLogs({
     topics: [
       [
@@ -87,6 +88,10 @@ const getMints = async (chainID, lastBlock) => {
       }
     }
   });
+
+  const end = new Date().getTime() / 1000;
+  console.log(`CHAIN: ${chainID}\tSCANNED IN: ${(end - start).toFixed(3)}`);
+
 
   const mints = tokens;
   // const mints = (await Promise.all(tokens.map(async (token) => {
