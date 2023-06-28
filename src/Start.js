@@ -63,9 +63,9 @@ function Start(props) {
           <div className='flex-grow'></div>
           <div className='flex-shrink' style={{ paddingRight: '.25em' }}>
             <select onChange={(e) => changeRange(e.target.value)}>
-              <option value='minute'>Minute</option>
               <option value='hour'>Hour</option>
               <option selected value='day'>Day</option>
+              <option value='week'>Week</option>
             </select>
           </div>
         </div>

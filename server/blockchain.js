@@ -88,19 +88,19 @@ const getMints = async (chainID, lastBlock) => {
     }
   });
 
-  // const mints = tokens;
-  const mints = (await Promise.all(tokens.map(async (token) => {
-    try {
-      const contract = getContract(token.contract, provider);
-      const tokenURI = await contract.tokenURI(token.tokenID);
-      if (tokenURI.length > 0 && tokenURI.length < 65_536) {
-        token.tokenURI = tokenURI;
-      }
-      return token;
-    } catch (e) {
-      return null;
-    }
-  }))).filter(m => m !== null);
+  const mints = tokens;
+  // const mints = (await Promise.all(tokens.map(async (token) => {
+  //   try {
+  //     const contract = getContract(token.contract, provider);
+  //     const tokenURI = await contract.tokenURI(token.tokenID);
+  //     if (tokenURI.length > 0 && tokenURI.length < 65_536) {
+  //       token.tokenURI = tokenURI;
+  //     }
+  //     return token;
+  //   } catch (e) {
+  //     return null;
+  //   }
+  // }))).filter(m => m !== null);
 
   console.log(`CHAIN: ${chainID}\tMINTS: ${mints.length}\tSKIPPED: ${tokens.length - mints.length}\tBLOCKS: ${1 + endBlock - startBlock}`);
 
