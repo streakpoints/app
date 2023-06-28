@@ -201,7 +201,7 @@ app.listen(port, () => {
   console.log(`Server listening on port ${port}`)
 });
 
-//*
+/*
 (async () => {
   const [result] = await pool.query(
     `
@@ -293,45 +293,47 @@ const scanChains = async () => {
       console.log(`CRON ERROR CHAIN ${chainID}: ${e.message}`);
     }
   }));
+};
+
+const genFeeds = async () => {
   for (const chainID of chainIDs) {
     const ranges = [
-      1,
+      // 1,
       60,
       60 * 24,
-      // 60 * 24 * 7
+      60 * 24 * 7
     ];
-    if (!mintCache[chainID]['lock']) {
-      const start = new Date().getTime() / 1000;
-      mintCache[chainID]['lock'] = true;
-      for (const range of ranges) {
-        try {
-          const [results] = await pool.query(
-            `
-            SELECT contract_address, COUNT(DISTINCT recipient) AS total
-            FROM mint
-            WHERE
-              chain_id = ? AND
-              create_time > DATE_SUB(NOW(), INTERVAL ? MINUTE)
-            GROUP BY contract_address
-            ORDER BY total DESC
-            LIMIT 300
-            `,
-            [
-              chainID,
-              range
-            ]
-          );
-          mintCache[chainID][range] = results;
-        } catch (e) {
-          break;
-        }
+    const start = new Date().getTime() / 1000;
+    for (const range of ranges) {
+      try {
+        const [results] = await pool.query(
+          `
+          SELECT contract_address, COUNT(DISTINCT recipient) AS total
+          FROM mint
+          WHERE
+            chain_id = ? AND
+            create_time > DATE_SUB(NOW(), INTERVAL ? MINUTE)
+          GROUP BY contract_address
+          ORDER BY total DESC
+          LIMIT 300
+          `,
+          [
+            chainID,
+            range
+          ]
+        );
+        mintCache[chainID][range] = results;
+      } catch (e) {
+        break;
       }
-      const end = new Date().getTime() / 1000;
-      console.log(`CHAIN: ${chainID}\tQUERIED IN: ${(end - start).toFixed(3)}`);
     }
-    mintCache[chainID]['lock'] = false;
+    const end = new Date().getTime() / 1000;
+    console.log(`CHAIN: ${chainID}\tMADE IN: ${(end - start).toFixed(3)}`);
   }
 };
 
 const CRON_MIN = '* * * * *';
-const scheduledJob = schedule.scheduleJob(CRON_MIN, scanChains);
+const CRON_5MIN = '*/5 * * * *';
+schedule.scheduleJob(CRON_MIN, scanChains);
+schedule.scheduleJob(CRON_5MIN, genFeeds);
+genFeeds();
