@@ -310,6 +310,7 @@ const genFeeds = async () => {
           `
           SELECT contract_address, COUNT(DISTINCT recipient) AS total
           FROM mint
+          USE INDEX (feed)
           WHERE
             chain_id = ? AND
             create_time > DATE_SUB(NOW(), INTERVAL ? MINUTE)
