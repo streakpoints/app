@@ -246,6 +246,8 @@ const scanChains = async () => {
         [ chainID ]
       );
       const tokens = await blockchain.getMints(chainID, result[0].last_block);
+      const mid = new Date().getTime() / 1000;
+      console.log(`CHAIN: ${chainID}\tSCANNED IN: ${(mid - start).toFixed(3)}`);
       if (tokens.length > 0) {
         const collectionMap = {};
         tokens.forEach(t => collectionMap[t.contract] = true);
