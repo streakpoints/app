@@ -156,7 +156,7 @@ app.get('/-/api/tokens', async (req, res) => {
     SELECT *
     FROM mint
     WHERE chain_id = ? AND contract_address = ? AND token_uri IS NOT NULL
-    ORDER BY create_time DESC
+    ORDER BY id DESC
     LIMIT ?,?
     `,
     [
