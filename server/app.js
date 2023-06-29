@@ -93,12 +93,18 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static('build'));
 
-const chainIDs = [1, 137];
+const chainIDs = [1, 137, 7777777];
+const chains = {
+  ethereum: 1,
+  polygon: 137,
+  zora: 7777777,
+};
 const mintCache = {};
 chainIDs.forEach(chainID => mintCache[chainID] = {});
 
 app.get('/-/api/feed', async (req, res) => {
-  const chain = parseInt(req.query.chain) || 1;
+  const chain = req.query.chain || 'ethereum';
+  const chainID = chains[chain];
   const limit = Math.min(parseInt(req.query.limit) || 10, 100);
   const offset = parseInt(req.query.offset) || 0;
   const range = req.query.range;
@@ -120,11 +126,11 @@ app.get('/-/api/feed', async (req, res) => {
       jsonResponse(res, new Error('Invalid Range'));
       return;
   }
-  if (chainIDs.indexOf(chain) < 0) {
+  if (chainIDs.indexOf(chainID) < 0) {
     jsonResponse(res, new Error('Invalid Chain'));
     return;
   }
-  const mints = (mintCache[chain][rangeMinutes] || []).slice(offset, offset + limit);
+  const mints = (mintCache[chainID][rangeMinutes] || []).slice(offset, offset + limit);
   if (mints.length == 0) {
     jsonResponse(res, null, {
       mints: [],
@@ -147,10 +153,15 @@ app.get('/-/api/feed', async (req, res) => {
 });
 
 app.get('/-/api/tokens', async (req, res) => {
-  const chain = parseInt(req.query.chain) || 0;
+  const chain = req.query.chain || 'ethereum';
+  const chainID = chains[chain];
   const contractAddress = req.query.contractAddress;
   const limit = Math.min(parseInt(req.query.limit) || 10, 100);
   const offset = parseInt(req.query.offset) || 0;
+  if (chainIDs.indexOf(chainID) < 0) {
+    jsonResponse(res, new Error('Invalid Chain'));
+    return;
+  }
   const [mints] = await pool.query(
     `
     SELECT *
@@ -160,7 +171,7 @@ app.get('/-/api/tokens', async (req, res) => {
     LIMIT ?,?
     `,
     [
-      chain,
+      chainID,
       contractAddress,
       offset,
       limit
@@ -247,19 +258,17 @@ const scanChains = async () => {
       );
       const tokens = await blockchain.getMints(chainID, result[0].last_block);
       const mid = new Date().getTime() / 1000;
-      console.log(`CHAIN: ${chainID}\tSCANNED IN: ${(mid - start).toFixed(3)}`);
       if (tokens.length > 0) {
         const collectionMap = {};
         tokens.forEach(t => collectionMap[t.contract] = true);
         const collections = await blockchain.getCollections(chainID, Object.keys(collectionMap));
         await pool.query(
           `
-          INSERT INTO collection (
+          INSERT IGNORE INTO collection (
             chain_id,
             contract_address,
             name
           ) VALUES ${`,(?,?,?)`.repeat(collections.length).slice(1)}
-          ON DUPLICATE KEY UPDATE id=id
           `,
           collections.reduce((acc, val) => acc.concat([
             chainID,
@@ -269,7 +278,7 @@ const scanChains = async () => {
         );
         await pool.query(
           `
-          INSERT INTO mint (
+          INSERT IGNORE INTO mint (
             chain_id,
             contract_address,
             token_id,
@@ -277,7 +286,6 @@ const scanChains = async () => {
             recipient,
             block_num
           ) VALUES ${`,(?,?,?,?,?,?)`.repeat(tokens.length).slice(1)}
-          ON DUPLICATE KEY UPDATE id=id
           `,
           tokens.reduce((acc, val) => acc.concat([
             chainID,

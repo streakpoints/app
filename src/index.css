@@ -47,7 +47,7 @@ a, a:visited, a:hover {
 }
 
 select {
-  padding: 1em;
+  padding: .5em;
   font-family: Helvetica, sans-serif;
   border-radius: 12px;
 }

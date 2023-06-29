@@ -2,11 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 import * as data from './data';
+
+const chains = {
+  1: 'ethereum',
+  137: 'polygon',
+  7777777: 'zora',
+};
+
 function Start(props) {
   const [mints, setMints] = useState([]);
   const [collections, setCollections] = useState([]);
   const [range, setRange] = useState('day');
-  const [chain, setChain] = useState(parseInt(props.match.params.chain) || 1);
+  const [chain, setChain] = useState(props.match.params.chain || 'ethereum');
   const [hasMore, setHasMore] = useState(false);
   const limit = 30;
   useEffect(() => {
@@ -44,7 +51,7 @@ function Start(props) {
   useEffect(() => {
     setHasMore(false);
     setMints([]);
-    setChain(parseInt(props.match.params.chain) || 1);
+    setChain(props.match.params.chain || 'ethereum');
   }, [props.match.params.chain]);
 
   const collectionMap = {};
@@ -58,8 +65,9 @@ function Start(props) {
       </div>
       <div style={{ maxWidth: '500px', margin: '0 auto', paddingBottom: '2em' }}>
         <div className='flex' style={{ alignItems: 'center' }}>
-          <Link className={`flex-shrink ${chain === 1 ? 'filter selected' : 'filter'}`} to='/1'>Ethereum</Link>
-          <Link className={`flex-shrink ${chain === 137 ? 'filter selected' : 'filter'}`} to='/137'>Polygon</Link>
+          <Link className={`flex-shrink ${chain === 'ethereum' ? 'filter selected' : 'filter'}`} to='/ethereum'>Ethereum</Link>
+          <Link className={`flex-shrink ${chain === 'polygon' ? 'filter selected' : 'filter'}`} to='/polygon'>Polygon</Link>
+          <Link className={`flex-shrink ${chain === 'zora' ? 'filter selected' : 'filter'}`} to='/zora'>Zora</Link>
           <div className='flex-grow'></div>
           <div className='flex-shrink' style={{ paddingRight: '.25em' }}>
             <select onChange={(e) => changeRange(e.target.value)}>
@@ -77,7 +85,7 @@ function Start(props) {
                 const numComments = collection.num_comments || 0;
                 return (
                   <li key={mint.contract_address} style={{ marginBottom: '.25em' }}>
-                    <Link className='collection-link' to={`/${collection.chain_id}/${collection.contract_address}`}>
+                    <Link className='collection-link' to={`/${chains[collection.chain_id]}/${collection.contract_address}`}>
                       {collection.name || mint.contract_address}
                     </Link>
                     <div style={{ color: 'gray', fontSize: '.75em' }}>
