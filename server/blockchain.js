@@ -2,16 +2,35 @@ const ethers = require('ethers');
 const abi = [{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":true,"internalType":"address","name":"approved","type":"address"},{"indexed":true,"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"Approval","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":true,"internalType":"address","name":"operator","type":"address"},{"indexed":false,"internalType":"bool","name":"approved","type":"bool"}],"name":"ApprovalForAll","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"from","type":"address"},{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":true,"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"Transfer","type":"event"},{"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"approve","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"owner","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"balance","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"getApproved","outputs":[{"internalType":"address","name":"operator","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"operator","type":"address"}],"name":"isApprovedForAll","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"name","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"ownerOf","outputs":[{"internalType":"address","name":"owner","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"from","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"safeTransferFrom","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"from","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"tokenId","type":"uint256"},{"internalType":"bytes","name":"data","type":"bytes"}],"name":"safeTransferFrom","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"operator","type":"address"},{"internalType":"bool","name":"_approved","type":"bool"}],"name":"setApprovalForAll","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"bytes4","name":"interfaceId","type":"bytes4"}],"name":"supportsInterface","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"symbol","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"tokenURI","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"from","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"tokenId","type":"uint256"}],"name":"transferFrom","outputs":[],"stateMutability":"nonpayable","type":"function"}];
 
 
-const etherProvider = new ethers.providers.AlchemyProvider(1, process.env.ALCHEMY_ETHEREUM_KEY);
-const maticProvider = new ethers.providers.AlchemyProvider(137, process.env.ALCHEMY_POLYGON_KEY);
+const ethereumProvider = new ethers.providers.AlchemyProvider(1, process.env.ALCHEMY_ETHEREUM_KEY);
+const polygonProvider = new ethers.providers.AlchemyProvider(137, process.env.ALCHEMY_POLYGON_KEY);
+const zoraProvider = new ethers.providers.StaticJsonRpcProvider('https://rpc.zora.energy');
 
 const getProvider = networkID => {
   if (networkID == 1) {
-    return etherProvider;
+    return ethereumProvider;
   } else if (networkID == 137) {
-    return maticProvider;
+    return polygonProvider;
+  } else if (networkID == 7777777) {
+    return zoraProvider;
   } else {
     throw new Error('Invalid network');
+  }
+};
+
+const getMaxLookBackBlocks = (chainID) => {
+  if (chainID == 1) {
+    return 10;
+  } else if (chainID == 137 || chainID == 7777777) {
+    return 50;
+  }
+};
+
+const getOffsetBlocksFromTip = (chainID) => {
+  if (chainID == 1) {
+    return 1;
+  } else if (chainID == 137 || chainID == 7777777) {
+    return 5;
   }
 };
 
@@ -51,10 +70,10 @@ const ERC20_721 = transferEvents.getEventTopic('Transfer(address indexed, addres
 
 const getMints = async (chainID, lastBlock) => {
   const provider = getProvider(chainID);
-  const maxLookBackBlocks = chainID == 1 ? 10 : 50;
-  const offsetBlocksFromTip = chainID == 1 ? 1 : 5;
+  const maxLookBackBlocks = getMaxLookBackBlocks(chainID);
+  const offsetBlocksFromTip = getOffsetBlocksFromTip(chainID);
   const endBlock = await provider.getBlockNumber() - offsetBlocksFromTip;
-  const startBlock = Math.max(endBlock - maxLookBackBlocks, lastBlock + 1);
+  const startBlock = Math.max(endBlock - maxLookBackBlocks + 1, lastBlock + 1);
   if (startBlock > endBlock) {
     return [];
   }
