@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
+import { Buffer } from 'buffer';
 import parseDataUrl from 'parse-data-url';
 import * as data from './data';
+
+window.Buffer = Buffer;
 
 const normalizeURL = image => {
   if (image.indexOf('ipfs://') === 0) {
