@@ -236,25 +236,18 @@ app.get('/-/api/overlap', async (req, res) => {
     num_collectors: statMap[contract_address].counter,
     chain_id: statMap[contract_address].chain_id,
   }));
-  if (stats.length == 0) {
-    jsonResponse(res, null, {
-      stats: [],
-      collections: [],
-    });
-  } else {
-    const [collections] = await pool.query(
-      `
-      SELECT *
-      FROM collection
-      WHERE contract_address IN (${`,?`.repeat(stats.length + 1).slice(1)})
-      `,
-      stats.map(m => m.contract_address).concat([contractAddress]),
-    );
-    jsonResponse(res, null, {
-      stats,
-      collections,
-    });
-  }
+  const [collections] = await pool.query(
+    `
+    SELECT *
+    FROM collection
+    WHERE contract_address IN (${`,?`.repeat(stats.length + 1).slice(1)})
+    `,
+    stats.map(m => m.contract_address).concat([contractAddress]),
+  );
+  jsonResponse(res, null, {
+    stats,
+    collections,
+  });
 });
 
 
