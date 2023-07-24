@@ -96,7 +96,7 @@ function Collection(props) {
         </div>
       </div>
       {
-        stats.length > 0 &&
+        mints.length > 0 &&
         <div>
           <div style={{ padding: '0em 1em', maxWidth: '500px', margin: '0 auto' }}>
             <div className='section-header'>Recent mints from this collection</div>
@@ -122,6 +122,11 @@ function Collection(props) {
               ))
             }
           </div>
+        </div>
+      }
+      {
+        stats.length > 0 &&
+        <div>
           <div style={{ padding: '0em 1em', maxWidth: '500px', margin: '0 auto' }}>
             <div className='section-header'>Other recent mints from these collectors</div>
           </div>
@@ -148,8 +153,6 @@ function Collection(props) {
           </div>
         </div>
       }
-      <div style={{ maxWidth: '500px', margin: '0 auto', paddingBottom: '2em' }}>
-      </div>
     </div>
   );
 }
