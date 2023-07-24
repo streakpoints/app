@@ -90,7 +90,7 @@ function Collection(props) {
         stats.length > 0 &&
         <div>
           <div style={{ padding: '0em 1em', maxWidth: '500px', margin: '0 auto' }}>
-            <div className='section-header'>Last 100 collects from these collectors</div>
+            <div className='section-header'>Lastest collects from these collectors</div>
           </div>
           <div style={{ padding: '0 1em', maxWidth: '500px', margin: '0 auto' }}>
             <div style={{ padding: '.5em 1.5em' }}>
