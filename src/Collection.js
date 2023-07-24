@@ -23,8 +23,8 @@ const addMetadataToMint = async mint => {
   const dataUrl = parseDataUrl(mint.token_uri);
   if (dataUrl) {
     const result = JSON.parse(dataUrl.toBuffer().toString());
-    image = dataUrl.image;
-    externalURL = dataUrl.external_url;
+    image = result.image;
+    externalURL = result.external_url;
   } else {
     const result = await axios.get(
       'https://fqk5crurzsicvoqpw67ghzmpda0xjyng.lambda-url.us-west-2.on.aws', {
