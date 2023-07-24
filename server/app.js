@@ -210,10 +210,10 @@ app.get('/-/api/overlap', async (req, res) => {
   }
   const [collectors] = await pool.query(
     `
-    SELECT recipient
+    SELECT DISTINCT recipient
     FROM mint
     WHERE contract_address = ?
-    LIMIT 10000
+    LIMIT 1000
     `,
     [
       contractAddress
@@ -221,13 +221,13 @@ app.get('/-/api/overlap', async (req, res) => {
   );
   const [mints] = await pool.query(
     `
-    SELECT DISTINCT chain_id, contract_address, recipient, id
+    SELECT DISTINCT chain_id, contract_address, recipient
     FROM mint
-    WHERE contract_address != ? AND recipient IN (${`,?`.repeat(collectors.length).slice(1)})
+    WHERE recipient IN (${`,?`.repeat(collectors.length).slice(1)}) AND contract_address != ?
     ORDER BY id DESC
     LIMIT 0,100
     `,
-    [ contractAddress ].concat(collectors.map(c => c.recipient))
+    collectors.map(c => c.recipient).concat([ contractAddress ])
   );
   const statMap = {};
   mints.forEach(m => {
