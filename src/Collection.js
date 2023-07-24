@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
-
+import parseDataUrl from 'parse-data-url';
 import * as data from './data';
 
 const normalizeURL = image => {
@@ -15,18 +15,27 @@ const normalizeURL = image => {
 };
 
 const addMetadataToMint = async mint => {
-  const result = mint.token_uri.indexOf('data:') === 0 ? (await axios.get(mint.token_uri)) : (await axios.get(
-    'https://fqk5crurzsicvoqpw67ghzmpda0xjyng.lambda-url.us-west-2.on.aws', {
-      params: {
-        url: normalizeURL(mint.token_uri)
+  let image = null;
+  let externalURL = null;
+  const dataUrl = parseDataUrl(mint.token_uri);
+  if (dataUrl) {
+    const result = JSON.parse(dataUrl.toBuffer().toString());
+    image = dataUrl.image;
+    externalURL = dataUrl.external_url;
+  } else {
+    const result = await axios.get(
+      'https://fqk5crurzsicvoqpw67ghzmpda0xjyng.lambda-url.us-west-2.on.aws', {
+        params: {
+          url: normalizeURL(mint.token_uri)
+        }
       }
-    }
-  ));
-  let image = result.data.image;
+    );
+    image = result.data.image;
+    externalURL = result.data.external_url;
+  }
   if (image) {
     image = normalizeURL(image);
   }
-  let externalURL = result.data.external_url;
   return Object.assign({}, mint, {
     image,
     externalURL
@@ -53,7 +62,7 @@ function Collection(props) {
       offset: 0,
     }).then(async r => {
       const mintsWithMetadata = await Promise.all(r.mints.map(addMetadataToMint));
-      setMints(mints.concat(mintsWithMetadata));
+      setMints(mintsWithMetadata);
     });
     data.getOverlap({
       chain,
@@ -68,19 +77,6 @@ function Collection(props) {
     setStats([]);
     setMints([]);
   }, [contractAddress]);
-
-  // const loadMore = () => {
-  //   data.getTokens({
-  //     chain,
-  //     contractAddress,
-  //     limit,
-  //     offset: mints.length,
-  //   }).then(async r => {
-  //     setHasMore(r.mints.length > 0);
-  //     const mintsWithMetadata = await Promise.all(r.mints.map(addMetadataToMint));
-  //     setMints(mints.concat(mintsWithMetadata));
-  //   });
-  // };
 
   const collectionMap = {};
   collections.forEach(c => {
