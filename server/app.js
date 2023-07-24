@@ -208,22 +208,26 @@ app.get('/-/api/overlap', async (req, res) => {
     jsonResponse(res, new Error('Invalid Chain'));
     return;
   }
+  const [collectors] = await pool.query(
+    `
+    SELECT recipient
+    FROM mint
+    WHERE contract_address = ?
+    LIMIT 10000
+    `,
+    [
+      contractAddress
+    ]
+  );
   const [mints] = await pool.query(
     `
     SELECT DISTINCT chain_id, contract_address, recipient, id
     FROM mint
-    WHERE contract_address != ? AND recipient IN (
-      SELECT recipient
-      FROM mint
-      WHERE contract_address = ?
-    )
+    WHERE contract_address != ? AND recipient IN (${`,?`.repeat(collectors.length).slice(1)})
     ORDER BY id DESC
     LIMIT 0,100
     `,
-    [
-      contractAddress,
-      contractAddress,
-    ]
+    [ contractAddress ].concat(collectors.map(c => c.recipient))
   );
   const statMap = {};
   mints.forEach(m => {
