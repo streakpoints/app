@@ -156,7 +156,7 @@ app.get('/-/api/tokens', async (req, res) => {
   const chain = req.query.chain || 'ethereum';
   const chainID = chains[chain];
   const contractAddress = req.query.contractAddress;
-  const limit = Math.min(parseInt(req.query.limit) || 10, 100);
+  const limit = Math.min(parseInt(req.query.limit) || 10, 9);
   const offset = parseInt(req.query.offset) || 0;
   if (chainIDs.indexOf(chainID) < 0) {
     jsonResponse(res, new Error('Invalid Chain'));
@@ -166,7 +166,7 @@ app.get('/-/api/tokens', async (req, res) => {
     `
     SELECT *
     FROM mint
-    WHERE chain_id = ? AND contract_address = ? AND token_uri IS NOT NULL
+    WHERE chain_id = ? AND contract_address = ?
     ORDER BY id DESC
     LIMIT ?,?
     `,
@@ -177,25 +177,12 @@ app.get('/-/api/tokens', async (req, res) => {
       limit
     ]
   );
-  if (mints.length == 0) {
-    jsonResponse(res, null, {
-      mints: [],
-      collections: [],
-    });
-  } else {
-    const [collections] = await pool.query(
-      `
-      SELECT *
-      FROM collection
-      WHERE contract_address IN (${`,?`.repeat(mints.length).slice(1)})
-      `,
-      mints.map(m => m.contract_address),
-    );
-    jsonResponse(res, null, {
-      mints,
-      collections,
-    });
-  }
+  await Promise.all(mints.map(async (mint) => {
+    mint.token_uri = await blockchain.getTokenURI(mint.chain_id, mint.contract_address, mint.token_id);
+  }));
+  jsonResponse(res, null, {
+    mints,
+  });
 });
 
 app.get('/-/api/overlap', async (req, res) => {

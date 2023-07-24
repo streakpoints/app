@@ -46,6 +46,15 @@ function Collection(props) {
   const [collections, setCollections] = useState([]);
   const dims = '200px';
   useEffect(() => {
+    data.getTokens({
+      chain,
+      contractAddress,
+      limit: 3,
+      offset: 0,
+    }).then(async r => {
+      const mintsWithMetadata = await Promise.all(r.mints.map(addMetadataToMint));
+      setMints(mints.concat(mintsWithMetadata));
+    });
     data.getOverlap({
       chain,
       contractAddress,
@@ -57,6 +66,7 @@ function Collection(props) {
 
   useEffect(() => {
     setStats([]);
+    setMints([]);
   }, [contractAddress]);
 
   // const loadMore = () => {
@@ -90,7 +100,31 @@ function Collection(props) {
         stats.length > 0 &&
         <div>
           <div style={{ padding: '0em 1em', maxWidth: '500px', margin: '0 auto' }}>
-            <div className='section-header'>Lastest collects from these collectors</div>
+            <div className='section-header'>Recent mints from this collection</div>
+          </div>
+          <div style={{ padding: '2em 1em', maxWidth: '700px', margin: '0 auto', textAlign: 'center' }}>
+            {
+              mints.filter(m => m.image).map(m => (
+                <div style={{ display: 'inline-block', verticalAlign: 'top', padding: '.5em', minWidth: dims }}>
+                  <img alt='nft' src={m.image} style={{ maxWidth: dims, maxHeight: dims, backgroundColor: '#fafafa' }} />
+                  {
+                    m.externalURL &&
+                    <a
+                      href={m.externalURL}
+                      target='_blank'
+                      rel='noreferrer'
+                      className='external-link'
+                      style={{ maxWidth: dims }}
+                    >
+                      {m.externalURL}
+                    </a>
+                  }
+                </div>
+              ))
+            }
+          </div>
+          <div style={{ padding: '0em 1em', maxWidth: '500px', margin: '0 auto' }}>
+            <div className='section-header'>Other recent mints from these collectors</div>
           </div>
           <div style={{ padding: '0 1em', maxWidth: '500px', margin: '0 auto' }}>
             <div style={{ padding: '.5em 1.5em' }}>
