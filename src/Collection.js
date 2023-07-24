@@ -33,42 +33,52 @@ const addMetadataToMint = async mint => {
   });
 };
 
+const chains = {
+  1: 'ethereum',
+  137: 'polygon',
+  7777777: 'zora',
+};
+
 function Collection(props) {
   const { chain, contractAddress } = props.match.params;
   const [mints, setMints] = useState([]);
+  const [stats, setStats] = useState([]);
   const [collections, setCollections] = useState([]);
-  const [hasMore, setHasMore] = useState(false);
-  const limit = 9;
   const dims = '200px';
   useEffect(() => {
-    data.getTokens({
+    data.getOverlap({
       chain,
       contractAddress,
-      limit,
-      offset: 0,
     }).then(async r => {
-      setHasMore(r.mints.length > 0);
+      setStats(r.stats);
       setCollections(r.collections);
-      const mintsWithMetadata = await Promise.all(r.mints.map(addMetadataToMint));
-      setMints(mintsWithMetadata);
     });
   }, [chain, contractAddress]);
 
-  const loadMore = () => {
-    data.getTokens({
-      chain,
-      contractAddress,
-      limit,
-      offset: mints.length,
-    }).then(async r => {
-      setHasMore(r.mints.length > 0);
-      const mintsWithMetadata = await Promise.all(r.mints.map(addMetadataToMint));
-      setMints(mints.concat(mintsWithMetadata));
-    });
-  };
+  useEffect(() => {
+    setStats([]);
+  }, [contractAddress]);
 
-  const collectionTitle = collections.length > 0 ? collections[0].name : '';
+  // const loadMore = () => {
+  //   data.getTokens({
+  //     chain,
+  //     contractAddress,
+  //     limit,
+  //     offset: mints.length,
+  //   }).then(async r => {
+  //     setHasMore(r.mints.length > 0);
+  //     const mintsWithMetadata = await Promise.all(r.mints.map(addMetadataToMint));
+  //     setMints(mints.concat(mintsWithMetadata));
+  //   });
+  // };
 
+  const collectionMap = {};
+  collections.forEach(c => {
+    collectionMap[c.contract_address.toLowerCase()] = c;
+  });
+
+  const collectionTitle = collectionMap[contractAddress.toLowerCase()] ? collectionMap[contractAddress.toLowerCase()].name : '';
+  console.log(stats, collections);
   return (
     <div>
       <div style={{ padding: '2em 1em', maxWidth: '500px', margin: '0 auto' }}>
@@ -77,52 +87,31 @@ function Collection(props) {
         </div>
       </div>
       {
-        mints.length > 0 &&
+        stats.length > 0 &&
         <div>
-          <div style={{ padding: '2em 1em', maxWidth: '500px', margin: '0 auto' }}>
-            <div className='section-header'>Recent Mints</div>
+          <div style={{ padding: '0em 1em', maxWidth: '500px', margin: '0 auto' }}>
+            <div className='section-header'>Last 100 collects from these collectors</div>
           </div>
-          <div style={{ padding: '2em 1em', maxWidth: '700px', margin: '0 auto', textAlign: 'center' }}>
-            {
-              mints.filter(m => m.image).map(m => (
-                <div style={{ display: 'inline-block', verticalAlign: 'top', padding: '.5em', minWidth: dims }}>
-                  <img alt='nft' src={m.image} style={{ maxWidth: dims, maxHeight: dims, backgroundColor: '#fafafa' }} />
-                  {
-                    m.externalURL &&
-                    <a
-                      href={m.externalURL}
-                      target='_blank'
-                      rel='noreferrer'
-                      className='external-link'
-                      style={{ maxWidth: dims }}
-                    >
-                      {m.externalURL}
-                    </a>
-                  }
-                </div>
-              ))
-            }
-            {
-              hasMore &&
-              <div style={{ display: 'inline-block', verticalAlign: 'top', padding: '.5em' }}>
-                <div
-                  className='flex'
-                  onClick={loadMore}
-                  style={{
-                    alignItems: 'center',
-                    width: dims,
-                    height: dims,
-                    justifyContent: 'center',
-                    fontSize: '3em',
-                    userSelect: 'none',
-                    cursor: 'pointer',
-                    backgroundColor: '#fafafa'
-                  }}
-                >
-                  ➕
-                </div>
-              </div>
-            }
+          <div style={{ padding: '0 1em', maxWidth: '500px', margin: '0 auto' }}>
+            <div style={{ padding: '.5em 1.5em' }}>
+              <ol style={{ paddingInlineStart: '1em' }}>
+                {
+                  stats.map(stats => {
+                    const collection = collectionMap[stats.contract_address] || {};
+                    return (
+                      <li key={stats.contract_address} style={{ marginBottom: '.25em' }}>
+                        <Link className='collection-link' to={`/${chains[collection.chain_id]}/${collection.contract_address}`}>
+                          {collection.name || stats.contract_address}
+                        </Link>
+                        <div style={{ color: 'gray', fontSize: '.75em' }}>
+                          <span>{stats.num_collectors} collectors</span>
+                        </div>
+                      </li>
+                    )
+                  })
+                }
+              </ol>
+            </div>
           </div>
         </div>
       }

@@ -198,6 +198,71 @@ app.get('/-/api/tokens', async (req, res) => {
   }
 });
 
+app.get('/-/api/overlap', async (req, res) => {
+  const chain = req.query.chain || 'ethereum';
+  const chainID = chains[chain];
+  const contractAddress = req.query.contractAddress;
+  const limit = Math.min(parseInt(req.query.limit) || 10, 100);
+  const offset = parseInt(req.query.offset) || 0;
+  if (chainIDs.indexOf(chainID) < 0) {
+    jsonResponse(res, new Error('Invalid Chain'));
+    return;
+  }
+  const [mints] = await pool.query(
+    `
+    SELECT DISTINCT chain_id, contract_address, recipient, id
+    FROM mint
+    WHERE contract_address != ? AND recipient IN (
+      SELECT recipient
+      FROM mint
+      WHERE contract_address = ?
+    )
+    ORDER BY id DESC
+    LIMIT 0,100
+    `,
+    [
+      contractAddress,
+      contractAddress,
+    ]
+  );
+  const statMap = {};
+  mints.forEach(m => {
+    if (!statMap[m.contract_address]) {
+      statMap[m.contract_address] = {
+        counter: 0,
+        chain_id: m.chain_id,
+      };
+    }
+    statMap[m.contract_address].counter++;
+  });
+  const stats = Object.keys(statMap)
+  .sort((contractA, contractB) => statMap[contractA].counter > statMap[contractB].counter ? -1 : 1)
+  .map(contract_address => ({
+    contract_address,
+    num_collectors: statMap[contract_address].counter,
+    chain_id: statMap[contract_address].chain_id,
+  }));
+  if (stats.length == 0) {
+    jsonResponse(res, null, {
+      stats: [],
+      collections: [],
+    });
+  } else {
+    const [collections] = await pool.query(
+      `
+      SELECT *
+      FROM collection
+      WHERE contract_address IN (${`,?`.repeat(stats.length + 1).slice(1)})
+      `,
+      stats.map(m => m.contract_address).concat([contractAddress]),
+    );
+    jsonResponse(res, null, {
+      stats,
+      collections,
+    });
+  }
+});
+
 
 
 app.get('/-/api/status', async (req, res) => {

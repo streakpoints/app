@@ -16,6 +16,11 @@ export const getTokens = async params => {
   return response.data.results;
 }
 
+export const getOverlap = async params => {
+  const response = await axios.get(`${BASE_URL}/overlap`, { params });
+  return response.data.results;
+}
+
 export const getAssetsOpensea = async (ownerAddress, contractAddresses) => {
   const response = await axios.get('https://api.opensea.io/api/v1/assets', {
     params: {
