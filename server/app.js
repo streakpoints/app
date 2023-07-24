@@ -206,20 +206,20 @@ app.get('/-/api/overlap', async (req, res) => {
     jsonResponse(res, new Error('Invalid Chain'));
     return;
   }
-  // const [recipients] = await pool.query(
-  //   `
-  //   SELECT recipient
-  //   FROM mint
-  //   WHERE contract_address = ?
-  //   LIMIT 10000
-  //   `,
-  //   [ contractAddress ]
-  // );
+  const [recipients] = await pool.query(
+    `
+    SELECT recipient
+    FROM mint
+    WHERE contract_address = ?
+    LIMIT 1000
+    `,
+    [ contractAddress ]
+  );
   const recipientMap = {};
-  // recipients.forEach(r => recipientMap[r.recipient] = true);
+  recipients.forEach(r => recipientMap[r.recipient] = true);
   const statMap = {};
   mintCache['all'].forEach(m => {
-    if (m.contract_address != contractAddress && !recipientMap[m.recipient]) {
+    if (m.contract_address != contractAddress && recipientMap[m.recipient]) {
       if (!statMap[m.contract_address]) {
         statMap[m.contract_address] = {
           counter: 0,
