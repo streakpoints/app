@@ -99,7 +99,7 @@ const chains = {
   polygon: 137,
   zora: 7777777,
 };
-const mintCache = {};
+const mintCache = { all: [] };
 chainIDs.forEach(chainID => mintCache[chainID] = {});
 
 app.get('/-/api/feed', async (req, res) => {
@@ -202,42 +202,31 @@ app.get('/-/api/overlap', async (req, res) => {
   const chain = req.query.chain || 'ethereum';
   const chainID = chains[chain];
   const contractAddress = req.query.contractAddress;
-  const limit = Math.min(parseInt(req.query.limit) || 10, 100);
-  const offset = parseInt(req.query.offset) || 0;
   if (chainIDs.indexOf(chainID) < 0) {
     jsonResponse(res, new Error('Invalid Chain'));
     return;
   }
-  const [collectors] = await pool.query(
+  const [recipients] = await pool.query(
     `
-    SELECT DISTINCT recipient
+    SELECT recipient
     FROM mint
     WHERE contract_address = ?
-    LIMIT 1000
     `,
-    [
-      contractAddress
-    ]
+    [ contractAddress ]
   );
-  const [mints] = await pool.query(
-    `
-    SELECT DISTINCT chain_id, contract_address, recipient
-    FROM mint
-    WHERE recipient IN (${`,?`.repeat(collectors.length).slice(1)}) AND contract_address != ?
-    ORDER BY id DESC
-    LIMIT 0,100
-    `,
-    collectors.map(c => c.recipient).concat([ contractAddress ])
-  );
+  const recipientMap = {};
+  recipients.forEach(r => recipientMap[r.recipient] = true);
   const statMap = {};
-  mints.forEach(m => {
-    if (!statMap[m.contract_address]) {
-      statMap[m.contract_address] = {
-        counter: 0,
-        chain_id: m.chain_id,
-      };
+  mintCache['all'].forEach(m => {
+    if (m.contract_address != contractAddress && recipientMap[m.recipient]) {
+      if (!statMap[m.contract_address]) {
+        statMap[m.contract_address] = {
+          counter: 0,
+          chain_id: m.chain_id,
+        };
+      }
+      statMap[m.contract_address].counter++;
     }
-    statMap[m.contract_address].counter++;
   });
   const stats = Object.keys(statMap)
   .sort((contractA, contractB) => statMap[contractA].counter > statMap[contractB].counter ? -1 : 1)
@@ -409,6 +398,19 @@ const genFeeds = async () => {
     const end = new Date().getTime() / 1000;
     console.log(`CHAIN: ${chainID}\tRANKED IN: ${(end - start).toFixed(3)}`);
   }
+  const startY = new Date().getTime() / 1000;
+  const [results] = await pool.query(
+    `
+    SELECT chain_id, contract_address, recipient
+    FROM mint
+    ORDER BY id DESC
+    LIMIT 100000
+    `,
+    []
+  );
+  const endY = new Date().getTime() / 1000;
+  console.log(`1M MINTS\tFETCHED IN: ${(endY - startY).toFixed(3)}`);
+  mintCache['all'] = results;
 };
 
 const CRON_MIN = '* * * * *';
