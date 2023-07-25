@@ -195,10 +195,10 @@ app.get('/-/api/overlap', async (req, res) => {
   }
   const [recipients] = await pool.query(
     `
-    SELECT recipient
+    SELECT DISTINCT recipient
     FROM mint
     WHERE contract_address = ?
-    LIMIT 1000
+    LIMIT 10000
     `,
     [ contractAddress ]
   );
@@ -345,6 +345,19 @@ const scanChains = async () => {
 };
 
 const genFeeds = async () => {
+  const startY = new Date().getTime() / 1000;
+  const [results] = await pool.query(
+    `
+    SELECT chain_id, contract_address, recipient
+    FROM mint
+    ORDER BY id DESC
+    LIMIT 1000000
+    `,
+    []
+  );
+  const endY = new Date().getTime() / 1000;
+  console.log(`1M MINTS\tFETCHED IN: ${(endY - startY).toFixed(3)}`);
+  mintCache['all'] = results;
   for (const chainID of chainIDs) {
     const ranges = [
       60,
@@ -379,19 +392,6 @@ const genFeeds = async () => {
     const end = new Date().getTime() / 1000;
     console.log(`CHAIN: ${chainID}\tRANKED IN: ${(end - start).toFixed(3)}`);
   }
-  const startY = new Date().getTime() / 1000;
-  const [results] = await pool.query(
-    `
-    SELECT chain_id, contract_address, recipient
-    FROM mint
-    ORDER BY id DESC
-    LIMIT 100000
-    `,
-    []
-  );
-  const endY = new Date().getTime() / 1000;
-  console.log(`1M MINTS\tFETCHED IN: ${(endY - startY).toFixed(3)}`);
-  mintCache['all'] = results;
 };
 
 const CRON_MIN = '* * * * *';
