@@ -1,5 +1,6 @@
 import Start from './Start';
 import Collection from './Collection';
+import Cast from './Cast';
 import './App.css';
 import {
   BrowserRouter as Router,
@@ -12,6 +13,7 @@ function App() {
     <div style={{ position: 'relative' }}>
       <Router>
         <Switch>
+          <Route path='/ethcaster' component={Cast} />
           <Route path='/:chain/:contractAddress' component={Collection} />
           <Route path='/:chain?' component={Start} />
         </Switch>

@@ -11,6 +11,7 @@ const ethers = require('ethers');
 const dotenv = require('dotenv');
 const path = require('path');
 const schedule = require('node-schedule');
+const request = require("request-promise");
 
 dotenv.config({ path: path.join(__dirname, '.env') });
 
@@ -237,7 +238,55 @@ app.get('/-/api/overlap', async (req, res) => {
   });
 });
 
+const getCastHash = async (user, hashPrefix) => {
+  const response = await request(`https://client.warpcast.com/v2/user-thread-casts?castHashPrefix=${hashPrefix}&username=${user}&limit=1`);
+  const casts = JSON.parse(response).result.casts;
+  if (casts.length == 0) {
+    throw new Error('Cast not found');
+  } else {
+    const [existing] = await pool.query(
+      `
+      SELECT * FROM farcast WHERE hash = ?
+      `,
+      [
+        casts[0].hash
+      ]
+    );
+    if (existing.length > 0) {
+      throw new Error('Already recast');
+    }
+    return casts[0].hash;
+  }
+};
 
+app.post('/-/api/check-cast', async (req, res) => {
+  const { user, hashPrefix } = req.body;
+  try {
+    const hash = await getCastHash(user, hashPrefix);
+    jsonResponse(res, null, 'OK');
+  } catch (e) {
+    jsonResponse(res, e);
+  }
+});
+
+app.post('/-/api/recast', async (req, res) => {
+  const { user, hashPrefix, txid } = req.body;
+  try {
+    const hash = await getCastHash(user, hashPrefix);
+    const result = await pool.query(
+      `
+      INSERT INTO farcast (hash, txid, status) VALUES (?,?, "PEND")
+      `,
+      [
+        hash,
+        txid
+      ]
+    );
+    jsonResponse(res, null, 'OK');
+  } catch (e) {
+    jsonResponse(res, e);
+  }
+});
 
 app.get('/-/api/status', async (req, res) => {
   jsonResponse(res, null, 'OK');
@@ -299,8 +348,22 @@ const scanChains = async () => {
       const mid = new Date().getTime() / 1000;
       if (tokens.length > 0) {
         const collectionMap = {};
-        tokens.forEach(t => collectionMap[t.contract] = true);
-        const collections = await blockchain.getCollections(chainID, Object.keys(collectionMap));
+        tokens.forEach(t => collectionMap[t.contract.toLowerCase()] = true);
+        const collectionAddresses = Object.keys(collectionMap);
+
+        const [existingCollections] = await pool.query(
+          `
+          SELECT contract_address
+          FROM collection
+          WHERE chain_id = ? AND contract_address IN (${`,?`.repeat(collectionAddresses.length).slice(1)})
+          `,
+          [ chainID ].concat(collectionAddresses)
+        );
+        const ecMap = {};
+        existingCollections.forEach(ec => ecMap[ec.contract_address.toLowerCase()] = true);
+
+        const newCollections = collectionAddresses.filter(ca => !ecMap[ca]);
+        const collections = await blockchain.getCollections(chainID, collectionAddresses);
         await pool.query(
           `
           INSERT IGNORE INTO collection (
@@ -362,7 +425,7 @@ const genFeeds = async () => {
     const ranges = [
       60,
       60 * 24,
-      60 * 24 * 7
+      // 60 * 24 * 7
     ];
     const start = new Date().getTime() / 1000;
     for (const range of ranges) {
@@ -394,8 +457,48 @@ const genFeeds = async () => {
   }
 };
 
+const scanCasts = async () => {
+  const [casts] = await pool.query(
+    `
+    SELECT hash, txid
+    FROM farcast
+    WHERE status = "PEND" AND txid IS NOT NULL
+    `,
+    []
+  );
+  await Promise.all(casts.map(async (cast) => {
+    const txn = await blockchain.getEthTransaction(cast.txid);
+    if (txn) {
+
+      const value = parseFloat(ethers.utils.formatEther(txn.value));
+      if (value > 0.0001 && txn.to == '0x0000000000000000000000000000000000000000') {
+        await blockchain.recast(cast.hash);
+        await pool.query(
+          `
+          UPDATE farcast SET status = "CONF" WHERE txid = ?
+          `,
+          [
+            cast.txid
+          ]
+        );
+      } else {
+        await pool.query(
+          `
+          UPDATE farcast SET status = "FAIL" WHERE txid = ?
+          `,
+          [
+            cast.txid
+          ]
+        );
+      }
+    }
+  }));
+};
+
+
 const CRON_MIN = '* * * * *';
 const CRON_5MIN = '*/5 * * * *';
+schedule.scheduleJob(CRON_MIN, scanCasts);
 schedule.scheduleJob(CRON_MIN, scanChains);
 schedule.scheduleJob(CRON_5MIN, genFeeds);
 genFeeds();

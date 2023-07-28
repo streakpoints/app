@@ -82,7 +82,6 @@ function Start(props) {
             <select onChange={(e) => changeRange(e.target.value)}>
               <option value='hour'>Hour</option>
               <option selected value='day'>Day</option>
-              <option value='week'>Week</option>
             </select>
           </div>
         </div>

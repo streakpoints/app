@@ -21,6 +21,16 @@ export const getOverlap = async params => {
   return response.data.results;
 }
 
+export const checkCast = async params => {
+  const response = await axios.post(`${BASE_URL}/check-cast`, params);
+  return response.data.results;
+}
+
+export const recast = async params => {
+  const response = await axios.post(`${BASE_URL}/recast`, params);
+  return response.data.results;
+}
+
 export const getAssetsOpensea = async (ownerAddress, contractAddresses) => {
   const response = await axios.get('https://api.opensea.io/api/v1/assets', {
     params: {
