@@ -66,8 +66,8 @@ function Start(props) {
           </Link>
           Ethcaster
         </div>
-        <h3>Getting exposure on Farcaster is difficult without followers.</h3>
-        <h3>With Ethcaster, you can recast your message via the @ethcaster account by burning ETH.</h3>
+        <h3>Exposure is difficult without followers.</h3>
+        <h3>Recast your message from the @ethcaster account by burning ETH.</h3>
         <h3>The current required burn is: 0.001 ETH.</h3>
       </div>
       <div style={{ maxWidth: '500px', margin: '0 auto', paddingBottom: '2em' }}>
