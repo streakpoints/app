@@ -9,6 +9,18 @@ import {
 } from 'react-router-dom';
 
 function App() {
+  const ecDev = false;
+  if (window.location.host.indexOf('ethcaster.com') > -1 || ecDev) {
+    return (
+      <div style={{ position: 'relative' }}>
+        <Router>
+          <Switch>
+            <Route path='/' component={Cast} />
+          </Switch>
+        </Router>
+      </div>
+    );
+  }
   return (
     <div style={{ position: 'relative' }}>
       <Router>

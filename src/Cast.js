@@ -4,12 +4,6 @@ import { ethers } from 'ethers';
 
 import * as data from './data';
 
-const chains = {
-  1: 'ethereum',
-  137: 'polygon',
-  7777777: 'zora',
-};
-
 function Start(props) {
   const [cast, setCast] = useState('');
   const [error, setError] = useState('');
