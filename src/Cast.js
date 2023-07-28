@@ -94,7 +94,7 @@ function Start(props) {
           <br />
           <br />
           <div style={{ fontStyle: 'italic' }}>
-            Note: do not resubmit this transaction.
+            Note: do not resubmit transaction with higher gas.
           </div>
           <br />
           <br />
