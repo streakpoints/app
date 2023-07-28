@@ -66,7 +66,7 @@ function Start(props) {
           </Link>
           Ethcaster
         </div>
-        <h3>Farcaster is a high-signal network. It's early along, yet getting exposure can still feel daunting.</h3>
+        <h3>Farcaster is a promising network. As with any network, getting exposure can feel daunting.</h3>
         <h3>Ethcaster lets you burn ETH to recast your message via the @ethcaster account.</h3>
         <h3>Current burn requirement to recast: 0.001 ETH.</h3>
       </div>
@@ -85,7 +85,7 @@ function Start(props) {
           {
             success ? (
               <div>
-                Success! Recast should happen within 1 minute of <a href={`https://etherscan.io/tx/${success}`}>transaction</a> confirming.
+                Success! Recast happens within 1 minute of <a href={`https://etherscan.io/tx/${success}`}>transaction</a> confirming.
               </div>
             ) : (
               <button onClick={recast}>Recast</button>
