@@ -22,6 +22,21 @@ const Wrapper = styled.div`
   }
 `;
 
+const PageWrapper = styled.div`
+  overflow-y: scroll;
+  background-color: white;
+  position: fixed;
+  right: 0;
+  width: 50vw;
+  height: 100vh;
+  box-shadow: 0 0 5px #999;
+  @media(max-width: 800px) {
+    width: 100vw;
+    height: 70vh;
+    bottom: 0;
+  }
+`;
+
 const chains = {
   1: 'ethereum',
   137: 'polygon',
@@ -353,17 +368,7 @@ function Start(props) {
       }
       {
         collectionContract && (
-          <div
-            style={{
-              overflowY: 'scroll',
-              backgroundColor: 'white',
-              position: 'fixed',
-              right: '0',
-              width: '50vw',
-              height: '100vh',
-              boxShadow: '0 0 5px #999'
-            }}
-          >
+          <PageWrapper>
             <Collection
               onClickBack={() => {
                 setCollectionContract(null);
@@ -371,7 +376,7 @@ function Start(props) {
               }}
               match={{ params: { contractAddress: collectionContract, chain: collectionChain } }}
             />
-          </div>
+          </PageWrapper>
         )
       }
     </div>
