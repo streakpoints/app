@@ -92,7 +92,14 @@ function Collection(props) {
     <div>
       <div style={{ padding: '2em 1em', maxWidth: '500px', margin: '0 auto' }}>
         <div style={{ fontSize: '24px', fontWeight: 'bold', marginTop: '1em' }}>
-          <Link className='nav-link' to={window.location.pathname.split('/').slice(0, -1).join('/')}>⇦</Link>&nbsp;&nbsp;{collectionTitle}
+          {
+            props.onClickBack ? (
+              <span style={{ cursor: 'pointer' }} className='nav-link' onClick={props.onClickBack}>⇦</span>
+            ) : (
+              <Link className='nav-link' to={window.location.pathname.split('/').slice(0, -1).join('/')}>⇦</Link>
+            )
+          }
+          &nbsp;&nbsp;{collectionTitle}
         </div>
       </div>
       {

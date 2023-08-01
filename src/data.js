@@ -10,6 +10,10 @@ export const getFeed = async params => {
   return response.data.results;
 }
 
+export const getRecentTokens = async () => {
+  const response = await axios.get(`${BASE_URL}/tokens/recent`);
+  return response.data.results;
+}
 
 export const getTokens = async params => {
   const response = await axios.get(`${BASE_URL}/tokens`, { params });

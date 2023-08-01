@@ -100,7 +100,14 @@ const chains = {
   polygon: 137,
   zora: 7777777,
 };
-const mintCache = { all: [] };
+const mintCache = {
+  all: [],
+  agg: {
+    1: [],
+    137: [],
+    7777777: [],
+  }
+};
 chainIDs.forEach(chainID => mintCache[chainID] = {});
 
 app.get('/-/api/feed', async (req, res) => {
@@ -151,6 +158,10 @@ app.get('/-/api/feed', async (req, res) => {
       collections,
     });
   }
+});
+
+app.get('/-/api/tokens/recent', async (req, res) => {
+  jsonResponse(res, null, mintCache['agg']);
 });
 
 app.get('/-/api/tokens', async (req, res) => {
@@ -219,6 +230,7 @@ app.get('/-/api/overlap', async (req, res) => {
   });
   const stats = Object.keys(statMap)
   .sort((contractA, contractB) => statMap[contractA].counter > statMap[contractB].counter ? -1 : 1)
+  .slice(0, 100) // top 100
   .map(contract_address => ({
     contract_address,
     num_collectors: statMap[contract_address].counter,
@@ -421,6 +433,44 @@ const genFeeds = async () => {
   const endY = new Date().getTime() / 1000;
   console.log(`1M MINTS\tFETCHED IN: ${(endY - startY).toFixed(3)}`);
   mintCache['all'] = results;
+
+  mintCache['agg'] = {
+    1: {
+      u: [],
+      c: [],
+    },
+    137: {
+      u: [],
+      c: [],
+    },
+    7777777: {
+      u: [],
+      c: [],
+    },
+    contracts: [],
+    recipients: [],
+  };
+  let recipientCounter = 0;
+  const recipientMap = {};
+  const recipients = [];
+  let contractCounter = 0;
+  const contractMap = {};
+  const contracts = [];
+  results.forEach(r => {
+    if (!recipientMap[r.recipient]) {
+      recipientMap[r.recipient] = ++recipientCounter;
+      recipients.push(r.recipient);
+    }
+    if (!contractMap[r.contract_address]) {
+      contractMap[r.contract_address] = ++contractCounter;
+      contracts.push(r.contract_address);
+    }
+    mintCache['agg'][r.chain_id].u.push(recipientMap[r.recipient]);
+    mintCache['agg'][r.chain_id].c.push(contractMap[r.contract_address]);
+  });
+  mintCache['agg'].contracts = contracts;
+  // mintCache['agg'].recipients = recipients;
+
   for (const chainID of chainIDs) {
     const ranges = [
       60,
