@@ -37,8 +37,8 @@ function Start(props) {
 
   const [collectionContract, setCollectionContract] = useState(null);
   const [collectionChain, setCollectionChain] = useState(null);
-  const [network, setNetwork] = useState(0);
-  const [limit, setLimit] = useState(30);
+  const [network, setNetwork] = useState(1);
+  const [limit, setLimit] = useState(100);
   const [loading, setLoading] = useState(true);
 
   // const check = () => {
@@ -308,8 +308,8 @@ function Start(props) {
             setNetwork(parseInt(e.target.value));
           }}
         >
-          <option selected value={0}>All Networks</option>
-          <option value={1}>Ethereum</option>
+          <option value={0}>All Networks</option>
+          <option selected value={1}>Ethereum</option>
           <option value={137}>Polygon</option>
           <option value={7777777}>Zora</option>
         </select>
