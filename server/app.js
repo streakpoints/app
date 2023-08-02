@@ -164,6 +164,20 @@ app.get('/-/api/tokens/recent', async (req, res) => {
   jsonResponse(res, null, mintCache['agg']);
 });
 
+app.get('/-/api/collection-owners', async (req, res) => {
+  const collectionAddress = (req.query.collectionAddress || '').toLowerCase();
+  const [recipients] = await pool.query(
+    `
+    SELECT DISTINCT recipient
+    FROM mint
+    WHERE contract_address = ?
+    LIMIT 10000
+    `,
+    [ collectionAddress ]
+  );
+  jsonResponse(res, null, recipients);
+});
+
 app.get('/-/api/tokens', async (req, res) => {
   const chain = req.query.chain || 'ethereum';
   const chainID = chains[chain];
@@ -469,7 +483,7 @@ const genFeeds = async () => {
     mintCache['agg'][r.chain_id].c.push(contractMap[r.contract_address]);
   });
   mintCache['agg'].contracts = contracts;
-  // mintCache['agg'].recipients = recipients;
+  mintCache['agg'].recipients = recipients;
 
   for (const chainID of chainIDs) {
     const ranges = [

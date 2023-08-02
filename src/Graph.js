@@ -44,7 +44,6 @@ const chains = {
 };
 
 function Start(props) {
-  const [recent, setRecent] = useState({});
   const [d3Loaded, setD3Loaded] = useState(false);
   const [collectionMap, setCollectionMap] = useState({});
   const [collectionOverlaps, setCollectionOverlaps] = useState({});
@@ -56,38 +55,52 @@ function Start(props) {
   const [limit, setLimit] = useState(100);
   const [loading, setLoading] = useState(true);
 
-  // const check = () => {
-  //   if (window.d3) {
-  //     setD3Loaded(true);
-  //   }
-  //   else {
-  //     setTimeout(check, 250);
-  //   }
-  // };
+  useEffect(() => {
+    setCollectionContract(null);
+    setCollectionChain(null);
+    setLoading(true);
+    d3.select("#network-graph")?.remove();
+    loadData(props.match.params.address);
+  }, [props.match.params.address]);
 
   useEffect(() => {
-    // check();
-    // const s = document.createElement('script');
-    // s.type = 'text/javascript';
-    // s.src = 'https://d3js.org/d3.v5.js';
-    // document.head.appendChild(s);
+    if (!loading) {
+      loadCharts();
+    }
+  }, [loading]);
 
-    data.getRecentTokens({
-    }).then(r => {
-      setRecent(r);
-      const userCollections = {};
-      const collectionMap = {};
-      const collectionCollectors = {};
-      r.contracts.forEach((contract, i) => {
-        collectionMap[i + 1] = {
-          contract
-        };
+  const loadData = async (collectionAddress) => {
+    const r = await data.getRecentTokens({});
+    let eligibleRecipients = {};
+    if (collectionAddress) {
+      const owners = await data.getCollectionOwners({ collectionAddress });
+      const ownerMap = {};
+      owners.forEach(o => ownerMap[o.recipient] = true);
+      r.recipients.forEach((r, i) => {
+        if (ownerMap[r]) {
+          eligibleRecipients[i + 1] = true;
+        }
       });
-      [1,137,7777777].forEach(chainID => {
-        const results = r[chainID];
-        for (let i = 0; i < results.u.length; i++) {
-          const user = results.u[i];
-          const collection = results.c[i];
+    } else {
+      r.recipients.forEach((r, i) => {
+        eligibleRecipients[i + 1] = true;
+      });
+    }
+
+    const userCollections = {};
+    const collectionMap = {};
+    const collectionCollectors = {};
+    r.contracts.forEach((contract, i) => {
+      collectionMap[i + 1] = {
+        contract
+      };
+    });
+    [1,137,7777777].forEach(chainID => {
+      const results = r[chainID];
+      for (let i = 0; i < results.u.length; i++) {
+        const user = results.u[i];
+        const collection = results.c[i];
+        if (eligibleRecipients[user]) {
           if (!userCollections[user]) {
             userCollections[user] = {};
           }
@@ -98,35 +111,29 @@ function Start(props) {
           userCollections[user][collection] = true;
           collectionMap[collection].chain = chainID;
         }
-      });
-      const collectionCollectorCounts = {};
-      Object.keys(collectionCollectors).forEach(cc => collectionCollectorCounts[cc] = Object.keys(collectionCollectors[cc]).length);
-      const collectionOverlaps = {};
-      Object.keys(userCollections).forEach(userID => {
-        Object.keys(userCollections[userID]).forEach((collection, i, collections) => {
-          if (!collectionOverlaps[collection]) {
-            collectionOverlaps[collection] = {};
-          }
-          for (let j = i + 1; j < collections.length; j++) {
-            if (!collectionOverlaps[collection][collections[j]]) {
-              collectionOverlaps[collection][collections[j]] = 0;
-            }
-            collectionOverlaps[collection][collections[j]]++;
-          }
-        })
-      });
-      setCollectionCollectorCounts(collectionCollectorCounts);
-      setCollectionOverlaps(collectionOverlaps);
-      setCollectionMap(collectionMap);
-      setLoading(false);
+      }
     });
-  }, []);
-
-  useEffect(() => {
-    if (!loading) {
-      loadCharts();
-    }
-  }, [loading]);
+    const collectionCollectorCounts = {};
+    Object.keys(collectionCollectors).forEach(cc => collectionCollectorCounts[cc] = Object.keys(collectionCollectors[cc]).length);
+    const collectionOverlaps = {};
+    Object.keys(userCollections).forEach(userID => {
+      Object.keys(userCollections[userID]).forEach((collection, i, collections) => {
+        if (!collectionOverlaps[collection]) {
+          collectionOverlaps[collection] = {};
+        }
+        for (let j = i + 1; j < collections.length; j++) {
+          if (!collectionOverlaps[collection][collections[j]]) {
+            collectionOverlaps[collection][collections[j]] = 0;
+          }
+          collectionOverlaps[collection][collections[j]]++;
+        }
+      })
+    });
+    setCollectionCollectorCounts(collectionCollectorCounts);
+    setCollectionOverlaps(collectionOverlaps);
+    setCollectionMap(collectionMap);
+    setLoading(false);
+  }
 
   const loadCharts = () => {
     const networks = (network == 0) ? [1,137,7777777] : [network];
@@ -134,8 +141,6 @@ function Start(props) {
     .filter(cid => networks.includes(collectionMap[cid].chain))
     .sort((a, b) => collectionCollectorCounts[a] > collectionCollectorCounts[b] ? -1 : 1)
     .slice(0, limit);
-    console.log(networks, includedCollections);
-
     const includedCollectionMap = {};
     includedCollections.forEach(c => includedCollectionMap[c] = true);
 
@@ -147,6 +152,9 @@ function Start(props) {
     }));
     const links = [];
     includedCollections.forEach(sourceCollection => {
+      if (!collectionOverlaps[sourceCollection]) {
+        return;
+      }
       Object.keys(collectionOverlaps[sourceCollection])
       .filter(targetCollection => includedCollectionMap[targetCollection])
       .forEach(targetCollection => {
@@ -215,7 +223,7 @@ function Start(props) {
     );
 
     node.append('circle')
-    .attr('r', d => 10 + Math.sqrt(Math.sqrt(collectionCollectorCounts[d.id])))
+    .attr('r', d => 10 + Math.log2(collectionCollectorCounts[d.id]))
     .attr('id', d => `circle-${d.id}`)
     .style('opacity', 0.5)
     .style('stroke', 'grey')

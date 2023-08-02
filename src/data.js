@@ -15,6 +15,11 @@ export const getRecentTokens = async () => {
   return response.data.results;
 }
 
+export const getCollectionOwners = async params => {
+  const response = await axios.get(`${BASE_URL}/collection-owners`, { params });
+  return response.data.results;
+}
+
 export const getTokens = async params => {
   const response = await axios.get(`${BASE_URL}/tokens`, { params });
   return response.data.results;

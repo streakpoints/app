@@ -26,6 +26,7 @@ function App() {
     <div style={{ position: 'relative' }}>
       <Router>
         <Switch>
+          <Route path='/graph/:address?' component={Graph} />
           <Route path='/graph' component={Graph} />
           <Route path='/:chain/:contractAddress' component={Collection} />
           <Route path='/:chain?' component={Start} />

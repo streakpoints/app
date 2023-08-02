@@ -142,11 +142,14 @@ function Collection(props) {
               <ol style={{ paddingInlineStart: '1em' }}>
                 {
                   stats.map(stats => {
-                    const collection = collectionMap[stats.contract_address] || {};
+                    const coll = collectionMap[stats.contract_address] || {};
                     return (
                       <li key={stats.contract_address} style={{ marginBottom: '.25em' }}>
-                        <Link className='collection-link' to={`/${chains[collection.chain_id]}/${collection.contract_address}`}>
-                          {collection.name || stats.contract_address}
+                        <Link
+                          className='collection-link'
+                          to={props.onClickBack ? `/graph/${coll.contract_address}` : `/${chains[coll.chain_id]}/${coll.contract_address}`}
+                        >
+                          {coll.name || stats.contract_address}
                         </Link>
                         <div style={{ color: 'gray', fontSize: '.75em' }}>
                           <span>{stats.num_collectors} collectors</span>
