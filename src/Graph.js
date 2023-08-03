@@ -51,7 +51,7 @@ function Start(props) {
 
   const [collectionContract, setCollectionContract] = useState(null);
   const [collectionChain, setCollectionChain] = useState(null);
-  const [network, setNetwork] = useState(1);
+  const [network, setNetwork] = useState(0);
   const [limit, setLimit] = useState(100);
   const [loading, setLoading] = useState(true);
 
