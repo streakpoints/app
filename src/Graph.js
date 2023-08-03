@@ -331,8 +331,8 @@ function Start(props) {
             setNetwork(parseInt(e.target.value));
           }}
         >
-          <option value={0}>All Networks</option>
-          <option selected value={1}>Ethereum</option>
+          <option selected value={0}>All Networks</option>
+          <option value={1}>Ethereum</option>
           <option value={137}>Polygon</option>
           <option value={7777777}>Zora</option>
         </select>
