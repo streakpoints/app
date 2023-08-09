@@ -3,8 +3,8 @@ CREATE TABLE `mint` (
     `chain_id`                      INT NOT NULL,
     `contract_address`              VARCHAR(42) NOT NULL,
     `token_id`                      VARCHAR(78) NOT NULL,
-    `token_uri`                     TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
     `recipient`                     VARCHAR(42) NOT NULL,
+    `value_gwei`                    BIGINT NOT NULL DEFAULT 0,
     `block_num`                     INT NOT NULL,
     `create_time`                   datetime DEFAULT CURRENT_TIMESTAMP,
 

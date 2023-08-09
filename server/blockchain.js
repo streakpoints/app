@@ -103,37 +103,41 @@ const getMints = async (chainID, lastBlock) => {
     toBlock: endBlock
   });
   const tokens = [];
-  logs.forEach(l => {
-    const sig = l.topics[0];
-    if (sig == ERC20_721 && l.topics.length == 4) {
-      if (
-        `0x${l.topics[1].slice(-40)}` == '0x0000000000000000000000000000000000000000'
-      ) {
-        tokens.push({
-          contract: l.address.toLowerCase(),
-          recipient: `0x${l.topics[2].slice(-40).toLowerCase()}`,
-          tokenID: ethers.BigNumber.from(l.topics[3]).toString(),
-          blockNum: l.blockNumber,
-          tokenURI: null,
-        });
+  const txnMap = {};
+  logs.filter(l => {
+    if (
+      l.topics[0] == ERC20_721 &&
+      l.topics.length == 4 &&
+      `0x${l.topics[1].slice(-40)}` == '0x0000000000000000000000000000000000000000'
+    ) {
+      if (!txnMap[l.transactionHash]) {
+        txnMap[l.transactionHash] = { numTokens: 1, valueGwei: 0 };
+      } else {
+        txnMap[l.transactionHash].numTokens++;
       }
+      return true;
     }
+    return false;
+  }).forEach(l => {
+    tokens.push({
+      txnID: l.transactionHash,
+      contract: l.address.toLowerCase(),
+      recipient: `0x${l.topics[2].slice(-40).toLowerCase()}`,
+      tokenID: ethers.BigNumber.from(l.topics[3]).toString(),
+      blockNum: l.blockNumber,
+      tokenURI: null,
+    });
   });
 
-  const mints = tokens;
+  await Promise.all(Object.keys(txnMap).map(async (txnID) => {
+    const txn = await provider.getTransaction(txnID);
+    const txnValue = parseInt(txn.value.toString().slice(0, -9) || 0);
+    txnMap[txnID].valueGwei = Math.floor(txnValue / txnMap[txnID].numTokens);
+  }));
 
-  // const mints = (await Promise.all(tokens.map(async (token) => {
-  //   try {
-  //     const contract = getContract(token.contract, provider);
-  //     const tokenURI = await contract.tokenURI(token.tokenID);
-  //     if (tokenURI.length > 0 && tokenURI.length < 65_536) {
-  //       token.tokenURI = tokenURI;
-  //     }
-  //     return token;
-  //   } catch (e) {
-  //     return null;
-  //   }
-  // }))).filter(m => m !== null);
+  tokens.forEach(t => t.valueGwei = txnMap[t.txnID].valueGwei);
+
+  const mints = tokens;
 
   console.log(`CHAIN: ${chainID}\tMINTS: ${mints.length}\tSKIPPED: ${tokens.length - mints.length}\tBLOCKS: ${1 + endBlock - startBlock}`);
 
