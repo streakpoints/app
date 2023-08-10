@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-
+import { ethers } from 'ethers';
 import * as data from './data';
 
 const chains = {
@@ -90,7 +90,9 @@ function Start(props) {
             {
               mints.map(mint => {
                 const collection = collectionMap[mint.contract_address] || {};
-                const numComments = collection.num_comments || 0;
+                const spentWei = parseInt(mint.spent) > 100000 ? (mint.spent + '000000000') : null;
+                const spentEth = spentWei && parseFloat(ethers.utils.formatEther(spentWei)).toFixed('4');
+                console.log(spentWei, spentEth);
                 return (
                   <li key={mint.contract_address} style={{ marginBottom: '.25em' }}>
                     <Link className='collection-link' to={`/${chains[collection.chain_id]}/${collection.contract_address}`}>
@@ -98,7 +100,7 @@ function Start(props) {
                     </Link>
                     <div style={{ color: 'gray', fontSize: '.75em' }}>
                       <span>{mint.total} collectors</span>
-                      <span>{numComments > 0 && ` | ${numComments} comment${numComments !== 1 && 's'}`}</span>
+                      <span>{spentWei ? ` | ${spentEth} ${chain === 'polygon' ? 'MATIC' : 'ETH'} spent` : ''}</span>
                     </div>
                   </li>
                 )

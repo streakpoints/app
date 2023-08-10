@@ -236,10 +236,12 @@ app.get('/-/api/overlap', async (req, res) => {
       if (!statMap[m.contract_address]) {
         statMap[m.contract_address] = {
           counter: 0,
+          spent: 0,
           chain_id: m.chain_id,
         };
       }
       statMap[m.contract_address].counter++;
+      statMap[m.contract_address].spent += m.value_gwei;
     }
   });
   const stats = Object.keys(statMap)
@@ -248,6 +250,7 @@ app.get('/-/api/overlap', async (req, res) => {
   .map(contract_address => ({
     contract_address,
     num_collectors: statMap[contract_address].counter,
+    spent: statMap[contract_address].spent,
     chain_id: statMap[contract_address].chain_id,
   }));
   const [collections] = await pool.query(
@@ -405,7 +408,7 @@ const genFeeds = async () => {
   const startY = new Date().getTime() / 1000;
   const [results] = await pool.query(
     `
-    SELECT chain_id, contract_address, recipient
+    SELECT chain_id, contract_address, recipient, value_gwei
     FROM mint
     ORDER BY id DESC
     LIMIT 1000000
@@ -464,7 +467,7 @@ const genFeeds = async () => {
       try {
         const [results] = await pool.query(
           `
-          SELECT contract_address, COUNT(DISTINCT recipient) AS total
+          SELECT contract_address, COUNT(DISTINCT recipient) AS total, SUM(value_gwei) AS spent
           FROM mint
           USE INDEX (feed)
           WHERE

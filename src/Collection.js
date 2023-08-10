@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { Buffer } from 'buffer';
 import parseDataUrl from 'parse-data-url';
+import { ethers } from 'ethers';
 import * as data from './data';
 
 window.Buffer = Buffer;
@@ -143,6 +144,8 @@ function Collection(props) {
                 {
                   stats.map(stats => {
                     const coll = collectionMap[stats.contract_address] || {};
+                    const spentWei = parseInt(stats.spent) > 100000 ? (stats.spent + '000000000') : null;
+                    const spentEth = spentWei && parseFloat(ethers.utils.formatEther(spentWei)).toFixed('4');
                     return (
                       <li key={stats.contract_address} style={{ marginBottom: '.25em' }}>
                         <Link
@@ -153,6 +156,7 @@ function Collection(props) {
                         </Link>
                         <div style={{ color: 'gray', fontSize: '.75em' }}>
                           <span>{stats.num_collectors} collectors</span>
+                          <span>{spentEth ? ` | ${spentEth} ${chain === 'polygon' ? 'MATIC' : 'ETH'} spent` : ''}</span>
                         </div>
                       </li>
                     )
