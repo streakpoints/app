@@ -474,7 +474,7 @@ const genFeeds = async () => {
             chain_id = ? AND
             create_time > DATE_SUB(NOW(), INTERVAL ? MINUTE)
           GROUP BY contract_address
-          ORDER BY total DESC
+          ORDER BY spent DESC, total DESC
           LIMIT 300
           `,
           [
