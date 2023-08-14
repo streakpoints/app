@@ -402,7 +402,7 @@ function Start(props) {
           margin: '0 auto'
         }}
       >
-        <div style={{ width: '100%', padding: '5em 1em' }}>
+        <div style={{ width: '100%', padding: '5em 1em', boxSizing: 'border-box' }}>
           <span style={{ position: 'relative' }}>
             <input
               type='text'
