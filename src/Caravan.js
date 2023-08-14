@@ -114,6 +114,7 @@ function Start(props) {
         aCollectors.forEach(aCollector => {
           if (collectionCollectors[bCollection][aCollector]) {
             collectionOverlaps[aCollection][bCollection] = 1 + (collectionOverlaps[aCollection][bCollection] || 0);
+            collectionOverlaps[bCollection][aCollection] = 1 + (collectionOverlaps[bCollection][aCollection] || 0);
           }
         });
       }
@@ -141,13 +142,27 @@ function Start(props) {
       zone: 1,
     }));
     const links = [];
+    const linkCache = {};
     includedCollections.forEach(aCollection => {
       if (!collectionOverlaps[aCollection]) {
         return;
       }
       Object.keys(collectionOverlaps[aCollection])
+      .sort((bCollection, cCollection) => {
+        const diff = collectionOverlaps[aCollection][bCollection] - collectionOverlaps[aCollection][cCollection];
+        if (diff > 0) {
+          return -1;
+        } else if (diff < 0) {
+          return 1;
+        } else {
+          return collectionSpend[bCollection] > collectionSpend[cCollection] ? -1 : 1
+        }
+      })
+      .filter(bCollection => !linkCache[aCollection + bCollection] && !linkCache[bCollection + aCollection])
+      .slice(0, 2)
       .filter(bCollection => includedCollectionMap[bCollection])
       .forEach(bCollection => {
+        linkCache[aCollection + bCollection] = true;
         links.push({
           source: aCollection.toString(),
           target: bCollection.toString(),
@@ -213,7 +228,7 @@ function Start(props) {
     );
 
     node.append('circle')
-    .attr('r', d => 10 + Math.log2(collectionSpend[d.id] || 1))
+    .attr('r', d => 30 + Math.log2(collectionSpend[d.id] || 1))
     .attr('id', d => `circle-${d.id}`)
     .style('opacity', 0.5)
     .style('stroke', 'grey')
@@ -302,7 +317,7 @@ function Start(props) {
     simulation.force('link')
     .links(links);
   };
-  console.log(selectedCollectionContract,selectedCollectionChain);
+
   return (
     <div>
       <div
