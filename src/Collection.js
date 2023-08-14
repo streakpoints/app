@@ -150,6 +150,12 @@ function Collection(props) {
                       <li key={stats.contract_address} style={{ marginBottom: '.25em' }}>
                         <Link
                           className='collection-link'
+                          onClick={(e) => {
+                            if (props.onSelectCollection) {
+                              e.preventDefault();
+                              props.onSelectCollection({ chain: coll.chain_id, contract: coll.contract_address });
+                            }
+                          }}
                           to={props.onClickBack ? `/graph/${coll.contract_address}` : `/${chains[coll.chain_id]}/${coll.contract_address}`}
                         >
                           {coll.name || stats.contract_address}

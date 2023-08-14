@@ -94,13 +94,16 @@ function Start(props) {
   const [network, setNetwork] = useState(0);
   const [limit, setLimit] = useState(100);
   const [loading, setLoading] = useState(true);
+  const [address, setAddress] = useState('');
 
   useEffect(() => {
-    setSelectedCollectionContract(null);
-    setSelectedCollectionChain(null);
-    setLoading(true);
-    d3.select("#network-graph")?.remove();
-    loadData(props.match.params.address);
+    if (props.match.params.address) {
+      setSelectedCollectionContract(null);
+      setSelectedCollectionChain(null);
+      setLoading(true);
+      d3.select("#network-graph")?.remove();
+      loadData(props.match.params.address);
+    }
   }, [props.match.params.address]);
 
   useEffect(() => {
@@ -389,6 +392,48 @@ function Start(props) {
     .links(links);
   };
 
+  if (!props.match.params.address) {
+    return (
+      <div
+        style={{
+          zIndex: '1',
+          width: '100vw',
+          maxWidth: '300px',
+          margin: '0 auto'
+        }}
+      >
+        <div style={{ width: '100%', padding: '5em 1em' }}>
+          <span style={{ position: 'relative' }}>
+            <input
+              type='text'
+              placeholder='address'
+              style={{
+                width: '100%',
+                borderRadius: '12px',
+                border: '1px solid gray',
+                padding: '.5em',
+                textAlign: 'center'
+              }}
+              value={address}
+              onChange={e => setAddress(e.target.value)}
+            />
+          </span>
+          <br />
+          <br />
+          <button
+            style={{ width: '100%' }}
+            disabled={address.length !== 42 || address.indexOf('0x') !== 0}
+            onClick={() => {
+              window.location.href = '/caravan/' + address;
+            }}
+          >
+            go
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
       <div
@@ -458,6 +503,10 @@ function Start(props) {
               onClickBack={() => {
                 setSelectedCollectionContract(null);
                 setSelectedCollectionChain(null);
+              }}
+              onSelectCollection={({ contract, chain }) => {
+                setSelectedCollectionContract(contract);
+                setSelectedCollectionChain(chain);
               }}
               match={{ params: { contractAddress: selectedCollectionContract, chain: chains[selectedCollectionChain] } }}
             />

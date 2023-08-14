@@ -275,7 +275,7 @@ app.get('/-/api/overlap', async (req, res) => {
   });
   const stats = Object.keys(statMap)
   .sort((contractA, contractB) => statMap[contractA].counter > statMap[contractB].counter ? -1 : 1)
-  .slice(0, 100) // top 100
+  .slice(0, 30) // top 30
   .map(contract_address => ({
     contract_address,
     num_collectors: statMap[contract_address].counter,
