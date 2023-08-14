@@ -159,7 +159,7 @@ function Start(props) {
         }
       })
       .filter(bCollection => !linkCache[aCollection + bCollection] && !linkCache[bCollection + aCollection])
-      .slice(0, 2)
+      .slice(0, 1)
       .filter(bCollection => includedCollectionMap[bCollection])
       .forEach(bCollection => {
         linkCache[aCollection + bCollection] = true;
