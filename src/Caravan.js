@@ -63,7 +63,7 @@ const getTokenImage = async mint => {
   if (dataUrl) {
     const result = JSON.parse(dataUrl.toBuffer().toString());
     image = result.image;
-  } else {
+  } else if (mint.token_uri) {
     const result = await axios.get(
       'https://fqk5crurzsicvoqpw67ghzmpda0xjyng.lambda-url.us-west-2.on.aws', {
         params: {
