@@ -12,5 +12,6 @@ CREATE TABLE `mint` (
     UNIQUE KEY `one_of` (`chain_id`, `contract_address`, `token_id`),
     INDEX `feed` (`create_time`, `chain_id`, `contract_address`, `recipient`),
     INDEX `chain_block` (`chain_id`, `block_num`),
-    INDEX `collections` (`contract_address`)
+    INDEX `collections` (`contract_address`),
+    INDEX `owners` (`recipient`)
 );
