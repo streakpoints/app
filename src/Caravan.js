@@ -59,24 +59,28 @@ const chains = {
 
 const getTokenImage = async mint => {
   let image = null;
-  const dataUrl = parseDataUrl(mint.token_uri);
-  if (dataUrl) {
-    const result = JSON.parse(dataUrl.toBuffer().toString());
-    image = result.image;
-  } else if (mint.token_uri) {
-    const result = await axios.get(
-      'https://fqk5crurzsicvoqpw67ghzmpda0xjyng.lambda-url.us-west-2.on.aws', {
-        params: {
-          url: normalizeURL(mint.token_uri)
+  try {
+    const dataUrl = parseDataUrl(mint.token_uri);
+    if (dataUrl) {
+      const result = JSON.parse(dataUrl.toBuffer().toString());
+      image = result.image;
+    } else if (mint.token_uri) {
+      const result = await axios.get(
+        'https://fqk5crurzsicvoqpw67ghzmpda0xjyng.lambda-url.us-west-2.on.aws', {
+          params: {
+            url: normalizeURL(mint.token_uri)
+          }
         }
-      }
-    );
-    image = result.data.image;
+      );
+      image = result.data.image;
+    }
+    if (image) {
+      image = normalizeURL(image);
+    }
+  } catch (e) {
+    console.log('Skipping', mint);
   }
-  if (image) {
-    image = normalizeURL(image);
-  }
-  return [mint.contract_address, image];
+  return [mint.contract_address, image || 'https://cent-resources-prod.s3.us-west-2.amazonaws.com/Screenshot+2023-08-13+at+11.41.05+PM_1691988070933.png'];
 };
 
 function Start(props) {
