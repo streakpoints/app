@@ -30,6 +30,11 @@ export const getOverlap = async params => {
   return response.data.results;
 }
 
+export const getUserGraph = async params => {
+  const response = await axios.get(`${BASE_URL}/user-graph`, { params });
+  return response.data.results;
+}
+
 export const checkCast = async params => {
   const response = await axios.post(`${BASE_URL}/check-cast`, params);
   return response.data.results;

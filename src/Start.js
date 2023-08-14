@@ -92,7 +92,6 @@ function Start(props) {
                 const collection = collectionMap[mint.contract_address] || {};
                 const spentWei = parseInt(mint.spent) > 100000 ? (mint.spent + '000000000') : null;
                 const spentEth = spentWei && parseFloat(ethers.utils.formatEther(spentWei)).toFixed('4');
-                console.log(spentWei, spentEth);
                 return (
                   <li key={mint.contract_address} style={{ marginBottom: '.25em' }}>
                     <Link className='collection-link' to={`/${chains[collection.chain_id]}/${collection.contract_address}`}>

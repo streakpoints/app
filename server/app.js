@@ -211,6 +211,33 @@ app.get('/-/api/tokens', async (req, res) => {
   });
 });
 
+app.get('/-/api/user-graph', async (req, res) => {
+  const recipient = req.query.userAddress;
+  const [userMints] = await pool.query(
+    `
+    SELECT * FROM mint WHERE recipient = ?
+    `,
+    [ recipient ]
+  );
+  const collectionMap = {};
+  userMints.forEach(m => collectionMap[m.contract_address] = {
+    contract_address: m.contract_address,
+    token_id: m.token_id,
+    chain_id: m.chain_id,
+  });
+  // mint.token_uri = await blockchain.getTokenURI(mint.chain_id, mint.contract_address, mint.token_id);
+  const collections = Object.keys(collectionMap);
+  const [collectionMints] = await pool.query(
+    `
+    SELECT contract_address, recipient, value_gwei
+    FROM mint
+    WHERE contract_address IN (${`,?`.repeat(collections.length).slice(1)})
+    `,
+    collections
+  );
+  jsonResponse(res, null, { collectionMints, userMints });
+});
+
 app.get('/-/api/overlap', async (req, res) => {
   const chain = req.query.chain || 'ethereum';
   const chainID = chains[chain];
