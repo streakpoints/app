@@ -1,8 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import styled, { withTheme } from 'styled-components';
+import axios from 'axios';
+import parseDataUrl from 'parse-data-url';
+import { Buffer } from 'buffer';
 import * as d3 from 'd3';
 import * as data from './data';
 import Collection from './Collection';
+
+const normalizeURL = image => {
+  if (image.indexOf('ipfs://') === 0) {
+    image = image.replace('ipfs://', 'https://ipfs.io/ipfs/');
+  }
+  if (image.indexOf('ar://') === 0) {
+    image = image.replace('ar://', 'https://arweave.net/');
+  }
+  return image;
+};
+
 
 const Wrapper = styled.div`
   height: 100vh;
@@ -43,7 +57,30 @@ const chains = {
   7777777: 'zora',
 };
 
+const getTokenImage = async mint => {
+  let image = null;
+  const dataUrl = parseDataUrl(mint.token_uri);
+  if (dataUrl) {
+    const result = JSON.parse(dataUrl.toBuffer().toString());
+    image = result.image;
+  } else {
+    const result = await axios.get(
+      'https://fqk5crurzsicvoqpw67ghzmpda0xjyng.lambda-url.us-west-2.on.aws', {
+        params: {
+          url: normalizeURL(mint.token_uri)
+        }
+      }
+    );
+    image = result.data.image;
+  }
+  if (image) {
+    image = normalizeURL(image);
+  }
+  return [mint.contract_address, image];
+};
+
 function Start(props) {
+  const [collectionImages, setCollectionImages] = useState({});
   const [collectionChain, setCollectionChain] = useState({});
   const [collectionSpend, setCollectionSpend] = useState({});
   const [collectionOverlaps, setCollectionOverlaps] = useState({});
@@ -89,14 +126,20 @@ function Start(props) {
       // ...
     };
 
+    const collectionImages = {};
+
+    const tokenImages = [];
+
     userMints.forEach(m => {
       if (!collectionCollectors[m.contract_address]) {
         collectionCollectors[m.contract_address] = {};
         collectionOverlaps[m.contract_address] = {};
         collectionSpend[m.contract_address] = 0;
         collectionChain[m.contract_address] = m.chain_id;
+        tokenImages.push(getTokenImage(m));
       }
     });
+    console.log(tokenImages);
 
     // Iterate over collection mints and aggregate:
     // 1. Each collections spend
@@ -123,6 +166,11 @@ function Start(props) {
     setCollectionChain(collectionChain);
     setCollectionSpend(collectionSpend);
     setCollectionOverlaps(collectionOverlaps);
+    await Promise.all(tokenImages.map(async (result) => {
+      const [collection, image] = await result;
+      collectionImages[collection] = image;
+    }));
+    setCollectionImages(collectionImages);
     setLoading(false);
   }
 
@@ -138,6 +186,7 @@ function Start(props) {
     const nodes = includedCollections.map(address => ({
       label: '',//n.toString(),
       id: address.toString(),
+      image: 'https://images-eu.ssl-images-amazon.com/images/G/02/gc/designs/livepreview/a_generic_10_uk_noto_email_v2016_uk-main._CB485921599_.png',
       influence: 1,
       zone: 1,
     }));
@@ -191,6 +240,23 @@ function Start(props) {
     .call(d3.zoom().on('zoom', () => svg.attr('transform', d3.event.transform)))
     .append('g');
 
+    const computeRadius = (id) => 30 + Math.log2(collectionSpend[id] || 1);
+
+    const defs = svg.append('svg:defs');
+    Object.keys(collectionImages).forEach(collection => {
+      defs.append('svg:pattern')
+      .attr('id', `img-${collection}`)
+      .attr('patternUnits', 'objectBoundingBox')
+      .attr('width', '1')
+      .attr('height', '1')
+      .append('svg:image')
+      .attr('xlink:href', collectionImages[collection])
+      .attr('x', 0)
+      .attr('y', 0)
+      .attr('width', computeRadius(collection) * 2)
+      .attr('height', computeRadius(collection) * 2);
+    })
+
     // Initialize the links
     const link = svg.selectAll('.links')
     .data(links)
@@ -228,13 +294,13 @@ function Start(props) {
     );
 
     node.append('circle')
-    .attr('r', d => 30 + Math.log2(collectionSpend[d.id] || 1))
+    .attr('r', d => computeRadius(d.id))
     .attr('id', d => `circle-${d.id}`)
-    .style('opacity', 0.5)
+    // .style('opacity', 0.5)
     .style('stroke', 'grey')
     .style('stroke-opacity', 0.3)
     .style('stroke-width', d => 2)
-    .style('fill', 'grey');
+    .style('fill', d => `url(#img-${d.id})`);
 
     node.append('text')
     .attr('dy', '-1em')
@@ -263,7 +329,8 @@ function Start(props) {
       // const newStrokeOut = 'red';
       const newOpacity = 0.6;
 
-      d3.selectAll('circle').style('stroke-opacity', 'black').style('opacity', 0.5).style('fill', 'black');
+      d3.selectAll('circle').style('stroke-opacity', 'black')
+      // .style('opacity', 0.5).style('fill', 'black');
       d3.selectAll('.links').style('stroke', 'grey').style('opacity', 0.25);
       d3.selectAll('text').style('opacity', 0.25);
 
@@ -272,10 +339,10 @@ function Start(props) {
       const neighborS = neighborSource[id];
       const neighborT = neighborTarget[id];
       d3.selectAll(`#circle-${id}`)
-      .style('stroke-opacity', newOpacity)
-      .style('opacity', 1)
-      .style('stroke', newStroke)
-      .style('fill', newStroke);
+      // .style('stroke-opacity', newOpacity)
+      // .style('opacity', 1)
+      // .style('stroke', newStroke)
+      // .style('fill', newStroke);
 
       d3.selectAll(`#label-${id}`).style('opacity', 1);
 
@@ -283,12 +350,12 @@ function Start(props) {
       // highlight the current node and its neighbors
       for (let i = 0; i < neighborS.length; i++) {
         d3.selectAll(`#line-${neighborS[i]}-${id}`).style('stroke', newStrokeIn).style('opacity', 1);
-        d3.selectAll(`#circle-${neighborS[i]}`).style('stroke-opacity', newOpacity).style('stroke', newStrokeIn);
+        // d3.selectAll(`#circle-${neighborS[i]}`).style('stroke-opacity', newOpacity).style('stroke', newStrokeIn);
         d3.selectAll(`#label-${neighborS[i]}`).style('opacity', 1);
       }
       for (let i = 0; i < neighborT.length; i++) {
         d3.selectAll(`#line-${id}-${neighborT[i]}`).style('stroke', newStrokeIn).style('opacity', 1);
-        d3.selectAll(`#circle-${neighborT[i]}`).style('stroke-opacity', newOpacity).style('stroke', newStrokeIn);
+        // d3.selectAll(`#circle-${neighborT[i]}`).style('stroke-opacity', newOpacity).style('stroke', newStrokeIn);
         d3.selectAll(`#label-${neighborT[i]}`).style('opacity', 1);
       }
     };
@@ -322,6 +389,7 @@ function Start(props) {
     <div>
       <div
         style={{
+          display: 'none',
           zIndex: '1',
           backgroundColor: 'transparent',
           position: 'fixed',

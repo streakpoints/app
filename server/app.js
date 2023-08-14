@@ -220,12 +220,14 @@ app.get('/-/api/user-graph', async (req, res) => {
     [ recipient ]
   );
   const collectionMap = {};
-  userMints.forEach(m => collectionMap[m.contract_address] = {
-    contract_address: m.contract_address,
-    token_id: m.token_id,
-    chain_id: m.chain_id,
+  await Promise.all(userMints.map(async (m) => {
+    m.token_uri = await blockchain.getTokenURI(m.chain_id, m.contract_address, m.token_id);
+  }));
+  userMints.forEach(um => collectionMap[um.contract_address] = {
+    contract_address: um.contract_address,
+    token_id: um.token_id,
+    chain_id: um.chain_id,
   });
-  // mint.token_uri = await blockchain.getTokenURI(mint.chain_id, mint.contract_address, mint.token_id);
   const collections = Object.keys(collectionMap);
   const [collectionMints] = await pool.query(
     `
