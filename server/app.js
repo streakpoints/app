@@ -533,22 +533,22 @@ const genFeeds = async () => {
 
   const startS = new Date().getTime() / 1000;
   for (const range of ranges) {
-    const [result] = await pool.query(
-      `
-      SELECT recipient, FLOOR(SUM(value_gwei * IF(chain_id = 137, ?, ?)) / 1000000000) AS spent
-      FROM mint
-      USE INDEX (feed)
-      WHERE create_time > DATE_SUB(NOW(), INTERVAL ? MINUTE) AND contract_address NOT IN (${`,?`.repeat(exclusions.length).slice(1)})
-      GROUP BY recipient
-      ORDER BY spent DESC
-      LIMIT 300
-      `,
-      [
-        maticRate,
-        etherRate,
-        range,
-      ].concat(exclusions)
-    );
+    // const [result] = await pool.query(
+    //   `
+    //   SELECT recipient, FLOOR(SUM(value_gwei * IF(chain_id = 137, ?, ?)) / 1000000000) AS spent
+    //   FROM mint
+    //   USE INDEX (feed)
+    //   WHERE create_time > DATE_SUB(NOW(), INTERVAL ? MINUTE) AND contract_address NOT IN (${`,?`.repeat(exclusions.length).slice(1)})
+    //   GROUP BY recipient
+    //   ORDER BY spent DESC
+    //   LIMIT 300
+    //   `,
+    //   [
+    //     maticRate,
+    //     etherRate,
+    //     range,
+    //   ].concat(exclusions)
+    // );
     // for (const r of result) {
     //   try {
     //     if (!mintCache.ens[r.recipient]) {
@@ -565,7 +565,7 @@ const genFeeds = async () => {
     //     }
     //   }
     // });
-    mintCache.spenders[range] = result;
+    // mintCache.spenders[range] = result;
   }
   const endS = new Date().getTime() / 1000;
   console.log(`SPENDERS\tRANKED IN: ${(endS - startS).toFixed(3)}`);
