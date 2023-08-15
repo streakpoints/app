@@ -106,6 +106,13 @@ const mintCache = {
     1: [],
     137: [],
     7777777: [],
+  },
+  spenders: {
+    60: [],
+    1440: [],
+  },
+  ens: {
+
   }
 };
 chainIDs.forEach(chainID => mintCache[chainID] = {});
@@ -238,6 +245,26 @@ app.get('/-/api/user-graph', async (req, res) => {
     collections
   );
   jsonResponse(res, null, { collectionMints, userMints });
+});
+
+app.get('/-/api/spenders', async (req, res) => {
+  const limit = Math.min(parseInt(req.query.limit) || 10, 100);
+  const offset = parseInt(req.query.offset) || 0;
+  const range = req.query.range;
+  let rangeMinutes = null;
+  switch (range) {
+    case 'hour':
+      rangeMinutes = 60;
+      break;
+    case 'day':
+      rangeMinutes = 60 * 24;
+      break;
+    default:
+      jsonResponse(res, new Error('Invalid Range'));
+      return;
+  }
+
+  jsonResponse(res, null, mintCache.spenders[rangeMinutes].slice(offset, offset + limit));
 });
 
 app.get('/-/api/overlap', async (req, res) => {
@@ -485,12 +512,65 @@ const genFeeds = async () => {
   mintCache['agg'].contracts = contracts;
   mintCache['agg'].recipients = recipients;
 
+  // TODO: Remove above
+
+  const ranges = [
+    60,
+    60 * 24,
+    // 60 * 24 * 7
+  ];
+  const etherRate = 1844;
+  const maticRate = 0.68;
+  const [exclusionResults] = await pool.query(
+    `
+    SELECT * FROM excluded_collections
+    `,
+    []
+  );
+  const excludedMap = {};
+  exclusionResults.forEach(e => excludedMap[e.contract_address] = true);
+  const exclusions = Object.keys(excludedMap).concat(['0x0000000000000000000000000000000000000000']);
+
+  const startS = new Date().getTime() / 1000;
+  for (const range of ranges) {
+    const [result] = await pool.query(
+      `
+      SELECT recipient, FLOOR(SUM(value_gwei * IF(chain_id = 137, ?, ?)) / 1000000000) AS spent
+      FROM mint
+      USE INDEX (feed)
+      WHERE create_time > DATE_SUB(NOW(), INTERVAL ? MINUTE) AND contract_address NOT IN (${`,?`.repeat(exclusions.length).slice(1)})
+      GROUP BY recipient
+      ORDER BY spent DESC
+      LIMIT 300
+      `,
+      [
+        maticRate,
+        etherRate,
+        range,
+      ].concat(exclusions)
+    );
+    // for (const r of result) {
+    //   try {
+    //     if (!mintCache.ens[r.recipient]) {
+    //       mintCache.ens[r.recipient] = await blockchain.getENS(r.recipient);
+    //     }
+    //   } catch (e) {
+    //     mintCache.ens[r.recipient] = true;
+    //   }
+    // }
+    // result.forEach(r => {
+    //   if (mintCache.ens[r.recipient]) {
+    //     if (typeof mintCache.ens[r.recipient] === 'string') {
+    //       r.ens = mintCache.ens[r.recipient];
+    //     }
+    //   }
+    // });
+    mintCache.spenders[range] = result;
+  }
+  const endS = new Date().getTime() / 1000;
+  console.log(`SPENDERS\tRANKED IN: ${(endS - startS).toFixed(3)}`);
+
   for (const chainID of chainIDs) {
-    const ranges = [
-      60,
-      60 * 24,
-      // 60 * 24 * 7
-    ];
     const start = new Date().getTime() / 1000;
     for (const range of ranges) {
       try {
