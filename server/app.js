@@ -533,39 +533,39 @@ const genFeeds = async () => {
 
   const startS = new Date().getTime() / 1000;
   for (const range of ranges) {
-    // const [result] = await pool.query(
-    //   `
-    //   SELECT recipient, FLOOR(SUM(value_gwei * IF(chain_id = 137, ?, ?)) / 1000000000) AS spent
-    //   FROM mint
-    //   USE INDEX (feed)
-    //   WHERE create_time > DATE_SUB(NOW(), INTERVAL ? MINUTE) AND contract_address NOT IN (${`,?`.repeat(exclusions.length).slice(1)})
-    //   GROUP BY recipient
-    //   ORDER BY spent DESC
-    //   LIMIT 300
-    //   `,
-    //   [
-    //     maticRate,
-    //     etherRate,
-    //     range,
-    //   ].concat(exclusions)
-    // );
-    // for (const r of result) {
-    //   try {
-    //     if (!mintCache.ens[r.recipient]) {
-    //       mintCache.ens[r.recipient] = await blockchain.getENS(r.recipient);
-    //     }
-    //   } catch (e) {
-    //     mintCache.ens[r.recipient] = true;
-    //   }
-    // }
-    // result.forEach(r => {
-    //   if (mintCache.ens[r.recipient]) {
-    //     if (typeof mintCache.ens[r.recipient] === 'string') {
-    //       r.ens = mintCache.ens[r.recipient];
-    //     }
-    //   }
-    // });
-    // mintCache.spenders[range] = result;
+    const [result] = await pool.query(
+      `
+      SELECT recipient, FLOOR(SUM(value_gwei * IF(chain_id = 137, ?, ?)) / 1000000000) AS spent
+      FROM mint
+      USE INDEX (feed)
+      WHERE create_time > DATE_SUB(NOW(), INTERVAL ? MINUTE) AND contract_address NOT IN (${`,?`.repeat(exclusions.length).slice(1)})
+      GROUP BY recipient
+      ORDER BY spent DESC
+      LIMIT 100
+      `,
+      [
+        maticRate,
+        etherRate,
+        range,
+      ].concat(exclusions)
+    );
+    for (const r of result) {
+      try {
+        if (!mintCache.ens[r.recipient]) {
+          mintCache.ens[r.recipient] = await blockchain.getENS(r.recipient);
+        }
+      } catch (e) {
+        mintCache.ens[r.recipient] = true;
+      }
+    }
+    result.forEach(r => {
+      if (mintCache.ens[r.recipient]) {
+        if (typeof mintCache.ens[r.recipient] === 'string') {
+          r.ens = mintCache.ens[r.recipient];
+        }
+      }
+    });
+    mintCache.spenders[range] = result;
   }
   const endS = new Date().getTime() / 1000;
   console.log(`SPENDERS\tRANKED IN: ${(endS - startS).toFixed(3)}`);
