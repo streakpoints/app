@@ -7,12 +7,18 @@ const client = new farcaster.MerkleAPIClient(wallet);
 const ethereumProvider = new ethers.providers.AlchemyProvider(1, process.env.ALCHEMY_ETHEREUM_KEY);
 const polygonProvider = new ethers.providers.AlchemyProvider(137, process.env.ALCHEMY_POLYGON_KEY);
 const zoraProvider = new ethers.providers.StaticJsonRpcProvider('https://rpc.zora.energy');
+const baseProvider = new ethers.providers.StaticJsonRpcProvider('https://mainnet.base.org');
+const optimismProvider = new ethers.providers.StaticJsonRpcProvider('https://mainnet.optimism.io');
 
 const getProvider = networkID => {
   if (networkID == 1) {
     return ethereumProvider;
+  } else if (networkID == 10) {
+    return optimismProvider;
   } else if (networkID == 137) {
     return polygonProvider;
+  } else if (networkID == 8453) {
+    return baseProvider;
   } else if (networkID == 7777777) {
     return zoraProvider;
   } else {
@@ -23,7 +29,7 @@ const getProvider = networkID => {
 const getMaxLookBackBlocks = (chainID) => {
   if (chainID == 1) {
     return 10;
-  } else if (chainID == 137 || chainID == 7777777) {
+  } else if (chainID == 10 || chainID == 137 || chainID == 8453 || chainID == 7777777) {
     return 50;
   }
 };
@@ -31,7 +37,7 @@ const getMaxLookBackBlocks = (chainID) => {
 const getOffsetBlocksFromTip = (chainID) => {
   if (chainID == 1) {
     return 1;
-  } else if (chainID == 137 || chainID == 7777777) {
+  } else if (chainID == 10 || chainID == 137 || chainID == 8453 || chainID == 7777777) {
     return 5;
   }
 };
@@ -133,11 +139,15 @@ const getMints = async (chainID, lastBlock) => {
     const txn = await provider.getTransaction(txnID);
     const txnValue = parseInt(txn.value.toString().slice(0, -9) || 0);
     txnMap[txnID].valueGwei = Math.floor(txnValue / txnMap[txnID].numTokens);
+    txnMap[txnID].sender = txn.from.toLowerCase();
   }));
 
-  tokens.forEach(t => t.valueGwei = txnMap[t.txnID].valueGwei);
+  tokens.forEach(t => {
+    t.valueGwei = txnMap[t.txnID].valueGwei;
+    t.isEOA = txnMap[t.txnID].sender == t.recipient;
+  });
 
-  const mints = tokens.filter(t => t.valueGwei > 0);
+  const mints = tokens.filter(t => t.valueGwei > 0 && t.isEOA);
 
   console.log(`CHAIN: ${chainID}\tMINTS: ${mints.length}\tSKIPPED: ${tokens.length - mints.length}\tBLOCKS: ${1 + endBlock - startBlock}`);
 

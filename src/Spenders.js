@@ -3,60 +3,43 @@ import { Link } from 'react-router-dom';
 import { ethers } from 'ethers';
 import * as data from './data';
 
-const chains = {
-  1: 'ethereum',
-  137: 'polygon',
-  8453: 'base',
-  7777777: 'zora',
-};
-
-function Start(props) {
-  const [mints, setMints] = useState([]);
-  const [collections, setCollections] = useState([]);
+function Spenders(props) {
+  const [spenders, setSpenders] = useState([]);
   const [range, setRange] = useState('day');
-  const [chain, setChain] = useState(props.match.params.chain || 'ethereum');
   const [hasMore, setHasMore] = useState(false);
+  const [ens, setENS] = useState({});
   const limit = 30;
   useEffect(() => {
-    data.getFeed({
-      chain,
+    data.getSpenders({
       limit,
       offset: 0,
       range,
     }).then(r => {
-      setHasMore(r.mints.length > 0);
-      setMints(r.mints);
-      setCollections(r.collections);
+      setHasMore(r.length > 0);
+      setSpenders(r);
+      console.log(r.map(s => s.recipient).join(','));
+      data.getENS({ addresses: r.map(s => s.recipient).join(',') }).then(r => setENS(Object.assign({}, ens, r)));
     });
-  }, [range, chain]);
+  }, [range]);
 
   const loadMore = () => {
     data.getFeed({
-      chain,
       limit,
-      offset: mints.length,
+      offset: spenders.length,
       range,
     }).then(r => {
-      setHasMore(r.mints.length > 0);
-      setMints(mints.concat(r.mints).sort((a, b) => a.total > b.total ? -1 : 1));
-      setCollections(collections.concat(r.collections));
+      setHasMore(r.length > 0);
+      setSpenders(spenders.concat(r));
+      data.getENS({ addresses: r.map(s => s.recipient).join(',') }).then(r => setENS(Object.assign({}, ens, r)));
     });
   };
 
   const changeRange = range => {
     setHasMore(false);
-    setMints([]);
+    setSpenders([]);
     setRange(range);
   }
 
-  useEffect(() => {
-    setHasMore(false);
-    setMints([]);
-    setChain(props.match.params.chain || 'ethereum');
-  }, [props.match.params.chain]);
-
-  const collectionMap = {};
-  collections.forEach(c => collectionMap[c.contract_address] = c);
   return (
     <div>
       <div style={{ padding: '2em 1em', maxWidth: '500px', margin: '0 auto' }}>
@@ -70,17 +53,12 @@ function Start(props) {
               marginBottom: '-.1em',
             }}
           />
-          Collection Charts
+          Top Minters
         </div>
       </div>
       <div style={{ maxWidth: '500px', margin: '0 auto', paddingBottom: '2em' }}>
         <div className='flex' style={{ alignItems: 'center' }}>
-          <Link className={`flex-shrink ${chain === 'ethereum' ? 'filter selected' : 'filter'}`} to='/ethereum'>Ethereum</Link>
-          <Link className={`flex-shrink ${chain === 'polygon' ? 'filter selected' : 'filter'}`} to='/polygon'>Polygon</Link>
-          <Link className={`flex-shrink ${chain === 'zora' ? 'filter selected' : 'filter'}`} to='/zora'>Zora</Link>
-          <Link className={`flex-shrink ${chain === 'base' ? 'filter selected' : 'filter'}`} to='/base'>Base</Link>
-          <Link className={`flex-shrink ${chain === 'optimism' ? 'filter selected' : 'filter'}`} to='/optimism'>Optimism</Link>
-          <div className='flex-grow'>&nbsp;</div>
+          <div className='flex-grow'></div>
           <div className='flex-shrink' style={{ paddingRight: '.25em' }}>
             <select onChange={(e) => changeRange(e.target.value)}>
               <option value='hour'>Hour</option>
@@ -91,18 +69,14 @@ function Start(props) {
         <div style={{ padding: '.5em 1.5em' }}>
           <ol style={{ paddingInlineStart: '1em' }}>
             {
-              mints.map(mint => {
-                const collection = collectionMap[mint.contract_address] || {};
-                const spentWei = parseInt(mint.spent) > 100000 ? (mint.spent + '000000000') : null;
-                const spentEth = spentWei && parseFloat(ethers.utils.formatEther(spentWei)).toFixed('4');
+              spenders.map(spender => {
                 return (
-                  <li key={mint.contract_address} style={{ marginBottom: '.25em' }}>
-                    <Link className='collection-link' to={`/${chains[collection.chain_id]}/${collection.contract_address}`}>
-                      {collection.name || mint.contract_address}
+                  <li key={spender.recipient} style={{ marginBottom: '.25em' }}>
+                    <Link className='collection-link' to={`/caravan/${spender.recipient}`}>
+                      {ens[spender.recipient] || spender.recipient}
                     </Link>
                     <div style={{ color: 'gray', fontSize: '.75em' }}>
-                      <span>{mint.total} collectors</span>
-                      <span>{spentWei ? ` | ${spentEth} ${chain === 'polygon' ? 'MATIC' : 'ETH'} spent` : ''}</span>
+                      <span>${spender.spent} spent</span>
                     </div>
                   </li>
                 )
@@ -121,4 +95,4 @@ function Start(props) {
   );
 }
 
-export default Start;
+export default Spenders;

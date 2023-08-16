@@ -94,16 +94,19 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static('build'));
 
-const chainIDs = [1, 137, 7777777];
+const chainIDs = [1, 10, 137, 8453, 7777777];
 const chains = {
   ethereum: 1,
   polygon: 137,
   zora: 7777777,
+  base: 8453,
+  optimism: 10,
 };
 const mintCache = {
   all: [],
   agg: {
     1: [],
+    10: [],
     137: [],
     7777777: [],
   },
@@ -265,6 +268,57 @@ app.get('/-/api/spenders', async (req, res) => {
   }
 
   jsonResponse(res, null, mintCache.spenders[rangeMinutes].slice(offset, offset + limit));
+});
+
+app.get('/-/api/ens', async (req, res) => {
+  const addresses = (req.query.addresses || '').toLowerCase().split(',');
+  const hitList = {};
+  if (addresses.length == 0 || addresses[0] == '') {
+    jsonResponse(res, null, {});
+    return;
+  }
+  const [matches] = await pool.query(
+    `
+    SELECT * FROM ens WHERE address IN (${repeat('?', addresses.length)})
+    `,
+    addresses
+  );
+
+  const lookupList = {};
+  addresses.forEach(a => lookupList[a] = true);
+  const now = new Date().getTime();
+  const hour = 60 * 60 * 1000;
+  matches.forEach(m => {
+    const address = m.address.toLowerCase();
+    if (m.name) {
+      hitList[address] = m.name;
+      delete lookupList[address];
+    } else if (now - (new Date(m.last_check_time).getTime()) < hour) {
+      delete lookupList[address];
+    }
+  });
+  const values = [];
+  const addressesToLookup = Object.keys(lookupList);
+  if (addressesToLookup.length > 0) {
+    for (const address of addressesToLookup) {
+      try {
+        values.push(address);
+        const name = await blockchain.getENS(address);
+        values.push(name);
+        hitList[address] = name;
+      } catch (e) {
+        values.push(null);
+      }
+    }
+    await pool.query(
+      `
+      INSERT INTO ens (address, name) VALUES ${repeat('(?,?)', addressesToLookup.length)}
+      ON DUPLICATE KEY UPDATE last_check_time = NOW()
+      `,
+      values
+    );
+  }
+  jsonResponse(res, null, hitList);
 });
 
 app.get('/-/api/overlap', async (req, res) => {
@@ -480,7 +534,15 @@ const genFeeds = async () => {
       u: [],
       c: [],
     },
+    10: {
+      u: [],
+      c: [],
+    },
     137: {
+      u: [],
+      c: [],
+    },
+    8453: {
       u: [],
       c: [],
     },
@@ -529,46 +591,6 @@ const genFeeds = async () => {
   );
   const excludedMap = {};
   exclusionResults.forEach(e => excludedMap[e.contract_address] = true);
-  const exclusions = Object.keys(excludedMap).concat(['0x0000000000000000000000000000000000000000']);
-
-  const startS = new Date().getTime() / 1000;
-  for (const range of ranges) {
-    const [result] = await pool.query(
-      `
-      SELECT recipient, FLOOR(SUM(value_gwei * IF(chain_id = 137, ?, ?)) / 1000000000) AS spent
-      FROM mint
-      USE INDEX (feed)
-      WHERE create_time > DATE_SUB(NOW(), INTERVAL ? MINUTE) AND contract_address NOT IN (${`,?`.repeat(exclusions.length).slice(1)})
-      GROUP BY recipient
-      ORDER BY spent DESC
-      LIMIT 100
-      `,
-      [
-        maticRate,
-        etherRate,
-        range,
-      ].concat(exclusions)
-    );
-    for (const r of result) {
-      try {
-        if (!mintCache.ens[r.recipient]) {
-          mintCache.ens[r.recipient] = await blockchain.getENS(r.recipient);
-        }
-      } catch (e) {
-        mintCache.ens[r.recipient] = true;
-      }
-    }
-    result.forEach(r => {
-      if (mintCache.ens[r.recipient]) {
-        if (typeof mintCache.ens[r.recipient] === 'string') {
-          r.ens = mintCache.ens[r.recipient];
-        }
-      }
-    });
-    mintCache.spenders[range] = result;
-  }
-  const endS = new Date().getTime() / 1000;
-  console.log(`SPENDERS\tRANKED IN: ${(endS - startS).toFixed(3)}`);
 
   for (const chainID of chainIDs) {
     const start = new Date().getTime() / 1000;
@@ -576,7 +598,11 @@ const genFeeds = async () => {
       try {
         const [results] = await pool.query(
           `
-          SELECT contract_address, COUNT(DISTINCT recipient) AS total, SUM(value_gwei) AS spent
+          SELECT
+            contract_address,
+            COUNT(DISTINCT recipient) AS total,
+            SUM(value_gwei) AS spent,
+            MAX(token_id) AS latest_token_id
           FROM mint
           USE INDEX (feed)
           WHERE
@@ -584,14 +610,14 @@ const genFeeds = async () => {
             create_time > DATE_SUB(NOW(), INTERVAL ? MINUTE)
           GROUP BY contract_address
           ORDER BY spent DESC, total DESC
-          LIMIT 300
+          LIMIT 500
           `,
           [
             chainID,
             range
           ]
         );
-        mintCache[chainID][range] = results;
+        mintCache[chainID][range] = results.filter(r => !excludedMap[r.contract_address]);
       } catch (e) {
         break;
       }

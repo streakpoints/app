@@ -219,11 +219,11 @@ function Start(props) {
       .filter(bCollection => includedCollectionMap[bCollection])
       .forEach(bCollection => {
         linkCache[aCollection + bCollection] = true;
-        links.push({
-          source: aCollection.toString(),
-          target: bCollection.toString(),
-          weight: Math.sqrt(collectionOverlaps[aCollection][bCollection]),
-        });
+        // links.push({
+        //   source: aCollection.toString(),
+        //   target: bCollection.toString(),
+        //   weight: Math.sqrt(collectionOverlaps[aCollection][bCollection]),
+        // });
       });
     });
 

@@ -25,8 +25,18 @@ export const getTokens = async params => {
   return response.data.results;
 }
 
+export const getENS = async params => {
+  const response = await axios.get(`${BASE_URL}/ens`, { params });
+  return response.data.results;
+}
+
 export const getOverlap = async params => {
   const response = await axios.get(`${BASE_URL}/overlap`, { params });
+  return response.data.results;
+}
+
+export const getSpenders = async params => {
+  const response = await axios.get(`${BASE_URL}/spenders`, { params });
   return response.data.results;
 }
 
