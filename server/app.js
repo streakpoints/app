@@ -241,7 +241,6 @@ app.get('/-/api/tokens', async (req, res) => {
     LIMIT ?,?
     `,
     [
-      chainID,
       contractAddress,
       offset,
       limit
