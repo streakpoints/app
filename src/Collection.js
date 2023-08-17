@@ -48,17 +48,27 @@ const addMetadataToMint = async mint => {
 
 const chains = {
   1: 'ethereum',
+  10: 'optimism',
   137: 'polygon',
+  8453: 'base',
   7777777: 'zora',
 };
 
 function Collection(props) {
   const { chain, contractAddress } = props.match.params;
+  const [collectors, setCollectors] = useState([]);
+  const [collection, setCollection] = useState({});
   const [mints, setMints] = useState([]);
-  const [stats, setStats] = useState([]);
-  const [collections, setCollections] = useState([]);
+  const [ens, setENS] = useState({});
   const dims = '200px';
   useEffect(() => {
+    data.getCollection({
+      contractAddress
+    }).then(r => {
+      if (r.length > 0) {
+        setCollection(r[0]);
+      }
+    });
     data.getTokens({
       chain,
       contractAddress,
@@ -68,27 +78,19 @@ function Collection(props) {
       const mintsWithMetadata = await Promise.all(r.mints.map(addMetadataToMint));
       setMints(mintsWithMetadata);
     });
-    data.getOverlap({
-      chain,
+    data.getTopCollectors({
       contractAddress,
     }).then(async r => {
-      setStats(r.stats);
-      setCollections(r.collections);
+      setCollectors(r);
+      if (r.length > 0) {
+        data.getENS({
+          addresses: r.map(u => u.recipient).join(',')
+        }).then(e => {
+          setENS(e);
+        });
+      }
     });
-  }, [chain, contractAddress]);
-
-  useEffect(() => {
-    setStats([]);
-    setMints([]);
-  }, [contractAddress]);
-
-  const collectionMap = {};
-  collections.forEach(c => {
-    collectionMap[c.contract_address.toLowerCase()] = c;
-  });
-
-  const collectionTitle = collectionMap[contractAddress.toLowerCase()] ? collectionMap[contractAddress.toLowerCase()].name : '';
-  console.log(stats, collections);
+  }, []);
   return (
     <div>
       <div style={{ padding: '2em 1em', maxWidth: '500px', margin: '0 auto' }}>
@@ -100,7 +102,7 @@ function Collection(props) {
               <Link className='nav-link' to={window.location.pathname.split('/').slice(0, -1).join('/')}>⇦</Link>
             )
           }
-          &nbsp;&nbsp;{collectionTitle}
+          &nbsp;&nbsp;{collection.name || ''}
         </div>
       </div>
       {
@@ -133,35 +135,28 @@ function Collection(props) {
         </div>
       }
       {
-        stats.length > 0 &&
+        collectors.length > 0 &&
         <div>
           <div style={{ padding: '0em 1em', maxWidth: '500px', margin: '0 auto' }}>
-            <div className='section-header'>Other recent mints from these collectors</div>
+            <div className='section-header'>Top collectors</div>
           </div>
           <div style={{ padding: '0 1em', maxWidth: '500px', margin: '0 auto' }}>
             <div style={{ padding: '.5em 1.5em' }}>
               <ol style={{ paddingInlineStart: '1em' }}>
                 {
-                  stats.map(stats => {
-                    const coll = collectionMap[stats.contract_address] || {};
-                    const spentWei = parseInt(stats.spent) > 100000 ? (stats.spent + '000000000') : null;
+                  collectors.map(collector => {
+                    const spentWei = parseInt(collector.spent) > 100000 ? (collector.spent + '000000000') : null;
                     const spentEth = spentWei && parseFloat(ethers.utils.formatEther(spentWei)).toFixed('4');
                     return (
-                      <li key={stats.contract_address} style={{ marginBottom: '.25em' }}>
+                      <li key={collector.recipient} style={{ marginBottom: '.25em' }}>
                         <Link
                           className='collection-link'
-                          onClick={(e) => {
-                            if (props.onSelectCollection) {
-                              e.preventDefault();
-                              props.onSelectCollection({ chain: coll.chain_id, contract: coll.contract_address });
-                            }
-                          }}
-                          to={props.onClickBack ? `/graph/${coll.contract_address}` : `/${chains[coll.chain_id]}/${coll.contract_address}`}
+                          to={`/account/${collector.recipient}`}
                         >
-                          {coll.name || stats.contract_address}
+                          {ens[collector.recipient] || (collector.recipient.slice(0, 6) + '...' + collector.recipient.slice(-4))}
                         </Link>
                         <div style={{ color: 'gray', fontSize: '.75em' }}>
-                          <span>{stats.num_collectors} collectors</span>
+                          <span>{collector.total} collected</span>
                           <span>{spentEth ? ` | ${spentEth} ${chain === 'polygon' ? 'MATIC' : 'ETH'} spent` : ''}</span>
                         </div>
                       </li>

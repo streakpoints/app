@@ -5,6 +5,7 @@ import * as data from './data';
 
 const chains = {
   1: 'ethereum',
+  10: 'optimism',
   137: 'polygon',
   8453: 'base',
   7777777: 'zora',
@@ -94,7 +95,7 @@ function Start(props) {
               mints.map(mint => {
                 const collection = collectionMap[mint.contract_address] || {};
                 const spentWei = parseInt(mint.spent) > 100000 ? (mint.spent + '000000000') : null;
-                const spentEth = spentWei && parseFloat(ethers.utils.formatEther(spentWei)).toFixed('4');
+                const spentEth = spentWei && parseFloat(ethers.utils.formatEther(spentWei)).toFixed('2');
                 return (
                   <li key={mint.contract_address} style={{ marginBottom: '.25em' }}>
                     <Link className='collection-link' to={`/${chains[collection.chain_id]}/${collection.contract_address}`}>

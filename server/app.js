@@ -174,6 +174,60 @@ app.get('/-/api/tokens/recent', async (req, res) => {
   jsonResponse(res, null, mintCache['agg']);
 });
 
+app.get('/-/api/collection', async (req, res) => {
+  const contractAddress = (req.query.contractAddress || '').toLowerCase();
+  const [collection] = await pool.query(
+    `
+    SELECT *
+    FROM collection
+    WHERE contract_address = ?
+    `,
+    [ contractAddress ]
+  );
+  jsonResponse(res, null, collection);
+});
+
+app.get('/-/api/user-tokens', async (req, res) => {
+  const userAddress = (req.query.userAddress || '').toLowerCase();
+  const limit = Math.min(parseInt(req.query.limit) || 10, 9);
+  const offset = parseInt(req.query.offset) || 0;
+
+  const [mints] = await pool.query(
+    `
+    SELECT *
+    FROM mint
+    WHERE recipient = ?
+    ORDER BY id DESC
+    LIMIT ?,?
+    `,
+    [
+      userAddress,
+      offset,
+      limit
+    ]
+  );
+  await Promise.all(mints.map(async (mint) => {
+    mint.token_uri = await blockchain.getTokenURI(mint.chain_id, mint.contract_address, mint.token_id);
+  }));
+  jsonResponse(res, null, mints);
+});
+
+app.get('/-/api/top-collectors', async (req, res) => {
+  const contractAddress = (req.query.contractAddress || '').toLowerCase();
+  const [topCollectors] = await pool.query(
+    `
+    SELECT recipient, SUM(value_gwei) AS spent, COUNT(*) AS collected
+    FROM mint
+    WHERE contract_address = ?
+    GROUP BY recipient
+    ORDER BY spent DESC
+    LIMIT 30
+    `,
+    [ contractAddress ]
+  );
+  jsonResponse(res, null, topCollectors);
+});
+
 app.get('/-/api/collection-owners', async (req, res) => {
   const collectionAddress = (req.query.collectionAddress || '').toLowerCase();
   const [recipients] = await pool.query(

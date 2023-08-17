@@ -25,8 +25,23 @@ export const getTokens = async params => {
   return response.data.results;
 }
 
+export const getAccountTokens = async params => {
+  const response = await axios.get(`${BASE_URL}/user-tokens`, { params });
+  return response.data.results;
+}
+
+export const getCollection = async params => {
+  const response = await axios.get(`${BASE_URL}/collection`, { params });
+  return response.data.results;
+}
+
 export const getENS = async params => {
   const response = await axios.get(`${BASE_URL}/ens`, { params });
+  return response.data.results;
+}
+
+export const getTopCollectors = async params => {
+  const response = await axios.get(`${BASE_URL}/top-collectors`, { params });
   return response.data.results;
 }
 
