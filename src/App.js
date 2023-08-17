@@ -1,7 +1,6 @@
 import Start from './Start';
 import Collection from './Collection';
 import Cast from './Cast';
-import Graph from './Graph';
 import Caravan from './Caravan';
 import './App.css';
 import {
@@ -28,8 +27,6 @@ function App() {
       <Router>
         <Switch>
           <Route path='/account/:address?' component={Caravan} />
-          <Route path='/graph/:address?' component={Graph} />
-          <Route path='/graph' component={Graph} />
           <Route path='/:chain/:contractAddress' component={Collection} />
           <Route path='/:chain?' component={Start} />
         </Switch>

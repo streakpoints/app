@@ -104,16 +104,6 @@ const chains = {
 };
 const mintCache = {
   all: [],
-  agg: {
-    1: [],
-    10: [],
-    137: [],
-    7777777: [],
-  },
-  spenders: {
-    60: [],
-    1440: [],
-  },
   ens: {
 
   }
@@ -168,10 +158,6 @@ app.get('/-/api/feed', async (req, res) => {
       collections,
     });
   }
-});
-
-app.get('/-/api/tokens/recent', async (req, res) => {
-  jsonResponse(res, null, mintCache['agg']);
 });
 
 app.get('/-/api/collection', async (req, res) => {
@@ -293,26 +279,6 @@ app.get('/-/api/user-graph', async (req, res) => {
   userMints.forEach(m => collectionMap[m.contract_address] = true);
   const [collectionMints] = mintCache['all'].filter(r => collectionMap[r.contract_address]);
   jsonResponse(res, null, { collectionMints, userMints });
-});
-
-app.get('/-/api/spenders', async (req, res) => {
-  const limit = Math.min(parseInt(req.query.limit) || 10, 100);
-  const offset = parseInt(req.query.offset) || 0;
-  const range = req.query.range;
-  let rangeMinutes = null;
-  switch (range) {
-    case 'hour':
-      rangeMinutes = 60;
-      break;
-    case 'day':
-      rangeMinutes = 60 * 24;
-      break;
-    default:
-      jsonResponse(res, new Error('Invalid Range'));
-      return;
-  }
-
-  jsonResponse(res, null, mintCache.spenders[rangeMinutes].slice(offset, offset + limit));
 });
 
 app.get('/-/api/ens', async (req, res) => {
@@ -566,60 +532,13 @@ const genFeeds = async () => {
     SELECT chain_id, contract_address, recipient, value_gwei
     FROM mint
     ORDER BY id DESC
-    LIMIT 1000000
+    LIMIT 2000000
     `,
     []
   );
   const endY = new Date().getTime() / 1000;
-  console.log(`1M MINTS\tFETCHED IN: ${(endY - startY).toFixed(3)}`);
+  console.log(`2M MINTS\tFETCHED IN: ${(endY - startY).toFixed(3)}`);
   mintCache['all'] = results;
-
-  mintCache['agg'] = {
-    1: {
-      u: [],
-      c: [],
-    },
-    10: {
-      u: [],
-      c: [],
-    },
-    137: {
-      u: [],
-      c: [],
-    },
-    8453: {
-      u: [],
-      c: [],
-    },
-    7777777: {
-      u: [],
-      c: [],
-    },
-    contracts: [],
-    recipients: [],
-  };
-  let recipientCounter = 0;
-  const recipientMap = {};
-  const recipients = [];
-  let contractCounter = 0;
-  const contractMap = {};
-  const contracts = [];
-  results.forEach(r => {
-    if (!recipientMap[r.recipient]) {
-      recipientMap[r.recipient] = ++recipientCounter;
-      recipients.push(r.recipient);
-    }
-    if (!contractMap[r.contract_address]) {
-      contractMap[r.contract_address] = ++contractCounter;
-      contracts.push(r.contract_address);
-    }
-    mintCache['agg'][r.chain_id].u.push(recipientMap[r.recipient]);
-    mintCache['agg'][r.chain_id].c.push(contractMap[r.contract_address]);
-  });
-  mintCache['agg'].contracts = contracts;
-  mintCache['agg'].recipients = recipients;
-
-  // TODO: Remove above
 
   const ranges = [
     60,

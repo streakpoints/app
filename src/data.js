@@ -50,11 +50,6 @@ export const getOverlap = async params => {
   return response.data.results;
 }
 
-export const getSpenders = async params => {
-  const response = await axios.get(`${BASE_URL}/spenders`, { params });
-  return response.data.results;
-}
-
 export const getUserGraph = async params => {
   const response = await axios.get(`${BASE_URL}/user-graph`, { params });
   return response.data.results;

@@ -156,7 +156,7 @@ function Collection(props) {
                           {ens[collector.recipient] || (collector.recipient.slice(0, 6) + '...' + collector.recipient.slice(-4))}
                         </Link>
                         <div style={{ color: 'gray', fontSize: '.75em' }}>
-                          <span>{collector.total} collected</span>
+                          <span>{collector.collected} collected</span>
                           <span>{spentEth ? ` | ${spentEth} ${chain === 'polygon' ? 'MATIC' : 'ETH'} spent` : ''}</span>
                         </div>
                       </li>
