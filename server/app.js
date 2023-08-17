@@ -229,20 +229,14 @@ app.get('/-/api/collection-owners', async (req, res) => {
 });
 
 app.get('/-/api/tokens', async (req, res) => {
-  const chain = req.query.chain || 'ethereum';
-  const chainID = chains[chain];
   const contractAddress = req.query.contractAddress;
   const limit = Math.min(parseInt(req.query.limit) || 10, 9);
   const offset = parseInt(req.query.offset) || 0;
-  if (chainIDs.indexOf(chainID) < 0) {
-    jsonResponse(res, new Error('Invalid Chain'));
-    return;
-  }
   const [mints] = await pool.query(
     `
     SELECT *
     FROM mint
-    WHERE chain_id = ? AND contract_address = ?
+    WHERE contract_address = ?
     ORDER BY id DESC
     LIMIT ?,?
     `,
