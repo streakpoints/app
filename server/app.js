@@ -279,7 +279,10 @@ app.get('/-/api/user-graph', async (req, res) => {
   const recipient = req.query.userAddress;
   const [userMints] = await pool.query(
     `
-    SELECT * FROM mint WHERE recipient = ?
+    SELECT contract_address, chain_id, recipient, SUM(value_gwei) AS value_gwei, MAX(token_id) AS token_id
+    FROM mint
+    WHERE recipient = ?
+    GROUP BY contract_address, chain_id, recipient
     `,
     [ recipient ]
   );
@@ -287,20 +290,8 @@ app.get('/-/api/user-graph', async (req, res) => {
   await Promise.all(userMints.map(async (m) => {
     m.token_uri = await blockchain.getTokenURI(m.chain_id, m.contract_address, m.token_id);
   }));
-  userMints.forEach(um => collectionMap[um.contract_address] = {
-    contract_address: um.contract_address,
-    token_id: um.token_id,
-    chain_id: um.chain_id,
-  });
-  const collections = Object.keys(collectionMap);
-  const [collectionMints] = await pool.query(
-    `
-    SELECT contract_address, recipient, value_gwei
-    FROM mint
-    WHERE contract_address IN (${`,?`.repeat(collections.length).slice(1)})
-    `,
-    collections
-  );
+  userMints.forEach(m => collectionMap[m.contract_address] = true);
+  const [collectionMints] = mintCache['all'].filter(r => collectionMap[r.contract_address]);
   jsonResponse(res, null, { collectionMints, userMints });
 });
 

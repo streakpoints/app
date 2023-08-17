@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled, { withTheme } from 'styled-components';
+import { Link } from 'react-router-dom';
 import axios from 'axios';
 import parseDataUrl from 'parse-data-url';
 import { Buffer } from 'buffer';
@@ -95,6 +96,7 @@ function Start(props) {
   const [limit, setLimit] = useState(100);
   const [loading, setLoading] = useState(true);
   const [address, setAddress] = useState('');
+  const [ens, setENS] = useState({});
 
   useEffect(() => {
     if (props.match.params.address) {
@@ -114,6 +116,8 @@ function Start(props) {
 
   const loadData = async (userAddress) => {
     const r = await data.getRecentTokens({});
+    const e = await data.getENS({ addresses: userAddress });
+    setENS(e);
     const { userMints, collectionMints } = await data.getUserGraph({ userAddress });
 
     const collectionCollectors = {
@@ -146,12 +150,11 @@ function Start(props) {
         tokenImages.push(getTokenImage(m));
       }
     });
-    console.log(tokenImages);
 
     // Iterate over collection mints and aggregate:
     // 1. Each collections spend
     // 2. Each collections relationship
-    collectionMints.forEach(m => {
+    userMints.concat(collectionMints).forEach(m => {
       collectionCollectors[m.contract_address][m.recipient] = true;
       collectionSpend[m.contract_address] += m.value_gwei;
     });
@@ -193,7 +196,6 @@ function Start(props) {
     const nodes = includedCollections.map(address => ({
       label: '',//n.toString(),
       id: address.toString(),
-      image: 'https://images-eu.ssl-images-amazon.com/images/G/02/gc/designs/livepreview/a_generic_10_uk_noto_email_v2016_uk-main._CB485921599_.png',
       influence: 1,
       zone: 1,
     }));
@@ -247,7 +249,7 @@ function Start(props) {
     .call(d3.zoom().on('zoom', () => svg.attr('transform', d3.event.transform)))
     .append('g');
 
-    const computeRadius = (id) => 30 + Math.log2(collectionSpend[id] || 1);
+    const computeRadius = (id) => 30 + Math.log2(collectionSpend[id] + 1);
 
     const defs = svg.append('svg:defs');
     Object.keys(collectionImages).forEach(collection => {
@@ -329,6 +331,8 @@ function Start(props) {
     ));
 
     const onClickNode = (d) => {
+      setSelectedCollectionChain(null);
+      setSelectedCollectionContract(null);
       setSelectedCollectionChain(collectionChain[d.id]);
       setSelectedCollectionContract(d.id);
       const newStroke = 'yellow';
@@ -436,6 +440,21 @@ function Start(props) {
 
   return (
     <div>
+      <div style={{ position: 'fixed', top: '1em', left: '1em', zIndex: 1 }}>
+        <Link to='/' style={{ position: 'relative' }}>
+          <img
+            src='data:image/png;base64,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'
+            style={{
+              position: 'relative',
+              width: '24px',
+              height: '24px',
+              marginRight: '.75em',
+              bottom: '-.3em',
+            }}
+          />
+        </Link>
+        &nbsp;{ens[props.match.params.address] || props.match.params.address}
+      </div>
       <div
         style={{
           display: 'none',

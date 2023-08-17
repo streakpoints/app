@@ -3,8 +3,6 @@ import Collection from './Collection';
 import Cast from './Cast';
 import Graph from './Graph';
 import Caravan from './Caravan';
-import Spenders from './Spenders';
-import Account from './Account';
 import './App.css';
 import {
   BrowserRouter as Router,
@@ -29,10 +27,8 @@ function App() {
     <div style={{ position: 'relative' }}>
       <Router>
         <Switch>
-          <Route path='/spenders' component={Spenders} />
-          <Route path='/caravan/:address?' component={Caravan} />
+          <Route path='/account/:address?' component={Caravan} />
           <Route path='/graph/:address?' component={Graph} />
-          <Route path='/account/:userAddress' component={Account} />
           <Route path='/graph' component={Graph} />
           <Route path='/:chain/:contractAddress' component={Collection} />
           <Route path='/:chain?' component={Start} />
