@@ -567,13 +567,16 @@ const genFeeds = async () => {
             create_time > DATE_SUB(NOW(), INTERVAL ? MINUTE)
           GROUP BY contract_address
           ORDER BY spent DESC, total DESC
-          LIMIT 500
+          LIMIT 100
           `,
           [
             chainID,
             range
           ]
         );
+        await Promise.all(results.map(async (mint) => {
+          mint.token_uri = await blockchain.getTokenURI(chainID, mint.contract_address, mint.latest_token_id);
+        }));
         mintCache[chainID][range] = results.filter(r => !excludedMap[r.contract_address]);
       } catch (e) {
         break;

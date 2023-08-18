@@ -1,7 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ethers } from 'ethers';
+import axios from 'axios';
+import parseDataUrl from 'parse-data-url';
 import * as data from './data';
+
+const normalizeURL = image => {
+  if (image.indexOf('ipfs://') === 0) {
+    image = image.replace('ipfs://', 'https://ipfs.io/ipfs/');
+  }
+  if (image.indexOf('ar://') === 0) {
+    image = image.replace('ar://', 'https://arweave.net/');
+  }
+  return image;
+};
 
 const chains = {
   1: 'ethereum',
@@ -11,13 +23,41 @@ const chains = {
   7777777: 'zora',
 };
 
+const getTokenImage = async mint => {
+  let image = null;
+  try {
+    const dataUrl = parseDataUrl(mint.token_uri);
+    if (dataUrl) {
+      const result = JSON.parse(dataUrl.toBuffer().toString());
+      image = result.image;
+    } else if (mint.token_uri) {
+      const result = await axios.get(
+        'https://fqk5crurzsicvoqpw67ghzmpda0xjyng.lambda-url.us-west-2.on.aws', {
+          params: {
+            url: normalizeURL(mint.token_uri)
+          }
+        }
+      );
+      image = result.data.image;
+    }
+    if (image) {
+      image = normalizeURL(image);
+    }
+  } catch (e) {
+    console.log('Skipping', mint);
+  }
+  return [mint.contract_address, image];
+};
+
+
 function Start(props) {
   const [mints, setMints] = useState([]);
   const [collections, setCollections] = useState([]);
   const [range, setRange] = useState('day');
   const [chain, setChain] = useState(props.match.params.chain || 'ethereum');
   const [hasMore, setHasMore] = useState(false);
-  const limit = 30;
+  const [collectionImages, setCollectionImages] = useState({});
+  const limit = 10;
   useEffect(() => {
     data.getFeed({
       chain,
@@ -28,6 +68,17 @@ function Start(props) {
       setHasMore(r.mints.length > 0);
       setMints(r.mints);
       setCollections(r.collections);
+      Promise.all(r.mints.map(async (m) => {
+        try {
+          return await getTokenImage(m);
+        } catch (e) {
+          return [m.contract_address, null];
+        }
+      })).then(results => {
+        const collectionImages = {};
+        results.forEach(r => collectionImages[r[0]] = r[1]);
+        setCollectionImages(collectionImages);
+      })
     });
   }, [range, chain]);
 
@@ -41,6 +92,17 @@ function Start(props) {
       setHasMore(r.mints.length > 0);
       setMints(mints.concat(r.mints).sort((a, b) => a.total > b.total ? -1 : 1));
       setCollections(collections.concat(r.collections));
+      Promise.all(r.mints.map(async (m) => {
+        try {
+          return await getTokenImage(m);
+        } catch (e) {
+          return [m.contract_address, null];
+        }
+      })).then(results => {
+        const images = Object.assign({}, collectionImages);
+        results.forEach(r => images[r[0]] = r[1]);
+        setCollectionImages(images);
+      })
     });
   };
 
@@ -58,6 +120,9 @@ function Start(props) {
 
   const collectionMap = {};
   collections.forEach(c => collectionMap[c.contract_address] = c);
+
+  const thumbSize = '80px';
+
   return (
     <div>
       <div style={{ padding: '2em 1em', maxWidth: '500px', margin: '0 auto' }}>
@@ -89,21 +154,32 @@ function Start(props) {
             </select>
           </div>
         </div>
-        <div style={{ padding: '.5em 1.5em' }}>
-          <ol style={{ paddingInlineStart: '1em' }}>
+        <div style={{ padding: '.5em' }}>
+          <ol style={{ paddingInlineStart: '0em', fontSize: '18px' }}>
             {
               mints.map(mint => {
                 const collection = collectionMap[mint.contract_address] || {};
                 const spentWei = parseInt(mint.spent) > 100000 ? (mint.spent + '000000000') : null;
                 const spentEth = spentWei && parseFloat(ethers.utils.formatEther(spentWei)).toFixed('2');
                 return (
-                  <li key={mint.contract_address} style={{ marginBottom: '.25em' }}>
-                    <Link className='collection-link' to={`/${chains[collection.chain_id]}/${collection.contract_address}`}>
-                      {collection.name || mint.contract_address}
-                    </Link>
-                    <div style={{ color: 'gray', fontSize: '.75em' }}>
-                      <span>{mint.total} collectors</span>
-                      <span>{spentWei ? ` | ${spentEth} ${chain === 'polygon' ? 'MATIC' : 'ETH'} spent` : ''}</span>
+                  <li key={mint.contract_address} style={{ marginBottom: '1em' }} className='flex'>
+                    <div
+                      className='flex-shrink'
+                      style={{ textAlign: 'center', marginRight: '1em', width: thumbSize, height: thumbSize }}
+                    >
+                      <img
+                        src={collectionImages[mint.contract_address] || 'https://cent-resources-prod.s3.us-west-2.amazonaws.com/Screenshot+2023-08-13+at+11.41.05+PM_1691988070933.png'}
+                        style={{ height: thumbSize, maxWidth: thumbSize, borderRadius: '3px' }}
+                      />
+                    </div>
+                    <div className='flex-grow' style={{ marginTop: '.25em' }}>
+                      <Link className='collection-link' to={`/${chains[collection.chain_id]}/${collection.contract_address}`}>
+                        {collection.name || mint.contract_address}
+                      </Link>
+                      <div style={{ color: 'gray', fontSize: '.75em' }}>
+                        <div>{mint.total} collector{mint.total > 1 ? 's' : ''}</div>
+                        <div>{spentWei ? `${spentEth} ${chain === 'polygon' ? 'MATIC' : 'ETH'} spent` : ''}</div>
+                      </div>
                     </div>
                   </li>
                 )
