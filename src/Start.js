@@ -90,7 +90,7 @@ function Start(props) {
       range,
     }).then(r => {
       setHasMore(r.mints.length > 0);
-      setMints(mints.concat(r.mints).sort((a, b) => a.total > b.total ? -1 : 1));
+      setMints(mints.concat(r.mints));
       setCollections(collections.concat(r.collections));
       Promise.all(r.mints.map(async (m) => {
         try {
