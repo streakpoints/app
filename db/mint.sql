@@ -6,6 +6,7 @@ CREATE TABLE `mint` (
     `recipient`                     VARCHAR(42) NOT NULL,
     `value_gwei`                    BIGINT NOT NULL DEFAULT 0,
     `block_num`                     INT NOT NULL,
+    `recipient_score`               INT DEFAULT 0,
     `create_time`                   datetime DEFAULT CURRENT_TIMESTAMP,
 
     PRIMARY KEY (`id`),

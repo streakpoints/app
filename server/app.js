@@ -497,8 +497,9 @@ const scanChains = async () => {
             token_id,
             recipient,
             value_gwei,
+            recipient_score,
             block_num
-          ) VALUES ${`,(?,?,?,?,?,?)`.repeat(tokens.length).slice(1)}
+          ) VALUES ${`,(?,?,?,?,?,?,?)`.repeat(tokens.length).slice(1)}
           `,
           tokens.reduce((acc, val) => acc.concat([
             chainID,
@@ -506,6 +507,7 @@ const scanChains = async () => {
             val.tokenID,
             val.recipient,
             val.valueGwei,
+            val.score,
             val.blockNum,
           ]), [])
         );
@@ -559,6 +561,7 @@ const genFeeds = async () => {
             contract_address,
             COUNT(DISTINCT recipient) AS total,
             SUM(value_gwei) AS spent,
+            SUM(recipient_score) AS score,
             MAX(token_id) AS latest_token_id
           FROM mint
           USE INDEX (feed)
@@ -566,7 +569,7 @@ const genFeeds = async () => {
             chain_id = ? AND
             create_time > DATE_SUB(NOW(), INTERVAL ? MINUTE)
           GROUP BY contract_address
-          ORDER BY spent DESC, total DESC
+          ORDER BY score DESC, spent DESC
           LIMIT 100
           `,
           [

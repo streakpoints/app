@@ -179,6 +179,7 @@ function Start(props) {
                       <div style={{ color: 'gray', fontSize: '.75em' }}>
                         <div>{mint.total} collector{mint.total > 1 ? 's' : ''}</div>
                         <div>{spentWei ? `${spentEth} ${chain === 'polygon' ? 'MATIC' : 'ETH'} spent` : ''}</div>
+                        <div>{mint.score != 0 ? `collector score: ${mint.score}` : ''}</div>
                       </div>
                     </div>
                   </li>
