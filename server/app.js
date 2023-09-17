@@ -60,7 +60,7 @@ function repeat(template, occurences) {
 }
 
 const directives = helmet.contentSecurityPolicy.getDefaultDirectives();
-directives['default-src'] = [ "'self'", "api.opensea.io", "platform.twitter.com", "*.fontawesome.com", "fqk5crurzsicvoqpw67ghzmpda0xjyng.lambda-url.us-west-2.on.aws", "data:" ];
+directives['default-src'] = [ "'self'", "api.opensea.io", "platform.twitter.com", "*.fontawesome.com", "fqk5crurzsicvoqpw67ghzmpda0xjyng.lambda-url.us-west-2.on.aws", "data:", "ii6mdnux2ukcnuqwgfbmefi7am0fupqi.lambda-url.us-west-2.on.aws"];
 directives['script-src'] = [ "'self'", "'unsafe-inline'", "platform.twitter.com", "*.fontawesome.com" ];
 directives['img-src'] = [ "*", "data:" ];
 app.use(helmet({
@@ -98,7 +98,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static('build'));
 
-const chainIDs = [1, 10, 137, 8453, 7777777];
+const chainIDs = [1, 10, 8453, 7777777];
 const chains = {
   ethereum: 1,
   polygon: 137,
@@ -108,6 +108,7 @@ const chains = {
 };
 const mintCache = {
   all: [],
+  users: {},
   ens: {
 
   }
@@ -204,18 +205,45 @@ app.get('/-/api/user-tokens', async (req, res) => {
 
 app.get('/-/api/top-collectors', async (req, res) => {
   const contractAddress = (req.query.contractAddress || '').toLowerCase();
-  const [topCollectors] = await pool.query(
-    `
-    SELECT recipient, SUM(value_gwei) AS spent, COUNT(*) AS collected
-    FROM mint
-    WHERE contract_address = ?
-    GROUP BY recipient
-    ORDER BY spent DESC
-    LIMIT 30
-    `,
-    [ contractAddress ]
-  );
-  jsonResponse(res, null, topCollectors);
+  if (contractAddress.length == 0) {
+    const range = req.query.range;
+    let rangeMinutes = null;
+    switch (range) {
+      case 'minute':
+        rangeMinutes = 1;
+        break;
+      case 'hour':
+        rangeMinutes = 60;
+        break;
+      case 'day':
+        rangeMinutes = 60 * 24;
+        break;
+      case 'week':
+        rangeMinutes = 60 * 24 * 7;
+        break;
+      default:
+        jsonResponse(res, new Error('Invalid Range'));
+        return;
+    }
+    const collectors = mintCache['users'][rangeMinutes] || [];
+    collectors.forEach(c => {
+      c.ens = mintCache['ens'][c.recipient];
+    });
+    jsonResponse(res, null, collectors);
+  } else {
+    const [topCollectors] = await pool.query(
+      `
+      SELECT recipient, SUM(value_gwei) AS spent, COUNT(*) AS collected
+      FROM mint
+      WHERE contract_address = ?
+      GROUP BY recipient
+      ORDER BY spent DESC
+      LIMIT 30
+      `,
+      [ contractAddress ]
+    );
+    jsonResponse(res, null, topCollectors);
+  }
 });
 
 app.get('/-/api/collection-owners', async (req, res) => {
@@ -278,13 +306,8 @@ app.get('/-/api/user-graph', async (req, res) => {
   jsonResponse(res, null, { collectionMints, userMints });
 });
 
-app.get('/-/api/ens', async (req, res) => {
-  const addresses = (req.query.addresses || '').toLowerCase().split(',');
+const lookupENS = async (addresses) => {
   const hitList = {};
-  if (addresses.length == 0 || addresses[0] == '') {
-    jsonResponse(res, null, {});
-    return;
-  }
   const [matches] = await pool.query(
     `
     SELECT * FROM ens WHERE address IN (${repeat('?', addresses.length)})
@@ -300,6 +323,7 @@ app.get('/-/api/ens', async (req, res) => {
     const address = m.address.toLowerCase();
     if (m.name) {
       hitList[address] = m.name;
+      mintCache['ens'][address] = m.name;
       delete lookupList[address];
     } else if (now - (new Date(m.last_check_time).getTime()) < hour) {
       delete lookupList[address];
@@ -310,22 +334,33 @@ app.get('/-/api/ens', async (req, res) => {
   if (addressesToLookup.length > 0) {
     for (const address of addressesToLookup) {
       try {
-        values.push(address);
         const name = await blockchain.getENS(address);
-        values.push(name);
         hitList[address] = name;
+        mintCache['ens'][address] = name;
+        values.push(address);
+        values.push(name);
       } catch (e) {
-        values.push(null);
+        values.push(address, null);
       }
     }
     await pool.query(
       `
-      INSERT INTO ens (address, name) VALUES ${repeat('(?,?)', addressesToLookup.length)}
+      INSERT INTO ens (address, name) VALUES ${repeat('(?,?)', values.length / 2)}
       ON DUPLICATE KEY UPDATE last_check_time = NOW()
       `,
       values
     );
   }
+  return hitList;
+};
+
+app.get('/-/api/ens', async (req, res) => {
+  const addresses = (req.query.addresses || '').toLowerCase().split(',');
+  if (addresses.length == 0 || addresses[0] == '') {
+    jsonResponse(res, null, {});
+    return;
+  }
+  const hitList = await lookupENS(addresses);
   jsonResponse(res, null, hitList);
 });
 
@@ -539,13 +574,7 @@ const genFeeds = async () => {
   console.log(`2M MINTS\tFETCHED IN: ${(endY - startY).toFixed(3)}`);
   mintCache['all'] = results;
 
-  const ranges = [
-    60,
-    60 * 24,
-    // 60 * 24 * 7
-  ];
-  const etherRate = 1844;
-  const maticRate = 0.68;
+
   const [exclusionResults] = await pool.query(
     `
     SELECT * FROM excluded_collections
@@ -556,6 +585,10 @@ const genFeeds = async () => {
   exclusionResults.forEach(e => excludedMap[e.contract_address] = true);
 
   for (const chainID of chainIDs) {
+    const ranges = [
+      60,
+      60 * 24,
+    ];
     const start = new Date().getTime() / 1000;
     for (const range of ranges) {
       try {
@@ -591,6 +624,80 @@ const genFeeds = async () => {
     }
     const end = new Date().getTime() / 1000;
     console.log(`CHAIN: ${chainID}\tRANKED IN: ${(end - start).toFixed(3)}`);
+  }
+  const ranges = [
+    60,
+    60 * 24,
+    60 * 24 * 7,
+  ];
+  for (const range of ranges) {
+    const start = new Date().getTime() / 1000;
+    try {
+      const exclusions = Object.keys(excludedMap).concat("0x0000000000000000000000000000000000000000");
+      const [results] = await pool.query(
+        `
+        SELECT
+          recipient,
+          SUM(value_gwei) AS spent
+        FROM mint
+        USE INDEX (feed)
+        WHERE
+          create_time > DATE_SUB(NOW(), INTERVAL ? MINUTE) AND contract_address NOT IN (${repeat('?', exclusions.length)})
+        GROUP BY recipient
+        ORDER BY spent DESC
+        LIMIT 100
+        `,
+        [
+          range
+        ].concat(exclusions)
+      );
+      mintCache['users'][range] = results;
+      if (results.length > 0) {
+        lookupENS(results.map(r => r.recipient));
+      }
+      const userIndexMap = {};
+      results.forEach((r, i) => {
+        r.userCollections = [];
+        userIndexMap[r.recipient] = i;
+      });
+      const [userCollections] = await pool.query(
+        `
+        SELECT
+          recipient,
+          chain_id,
+          contract_address,
+          MAX(token_id) AS latest_token_id,
+          MAX(create_time) AS last_mint_time,
+          COUNT(DISTINCT contract_address) AS num_collected,
+          SUM(value_gwei) AS collection_spend
+        FROM mint
+        USE INDEX (feed)
+        WHERE
+          create_time > DATE_SUB(NOW(), INTERVAL ? MINUTE) AND recipient IN (${repeat('?', results.length)}) AND contract_address NOT IN (${repeat('?', exclusions.length)})
+        GROUP BY recipient, chain_id, contract_address
+        ORDER BY last_mint_time DESC
+        `,
+        [
+          range
+        ].concat(results.map(r => r.recipient)).concat(exclusions)
+      );
+      userCollections.forEach(async (uc) => {
+        try {
+          uc.token_uri = await blockchain.getTokenURI(uc.chain_id, uc.contract_address, uc.latest_token_id);
+          const index = userIndexMap[uc.recipient];
+          if (index !== undefined) {
+            results[index].userCollections.push(uc);
+          }
+        } catch (e) {
+
+        }
+      });
+    } catch (e) {
+      console.log(e.message);
+      break;
+    }
+    const end = new Date().getTime() / 1000;
+    console.log(`USERS: ${range}m\tRANKED IN: ${(end - start).toFixed(3)}`);
   }
 };
 

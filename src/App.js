@@ -2,6 +2,7 @@ import Start from './Start';
 import Collection from './Collection';
 import Cast from './Cast';
 import Caravan from './Caravan';
+import Collectors from './Collectors';
 import './App.css';
 import {
   BrowserRouter as Router,
@@ -26,6 +27,7 @@ function App() {
     <div style={{ position: 'relative' }}>
       <Router>
         <Switch>
+          <Route path='/collectors' component={Collectors} />
           <Route path='/account/:address?' component={Caravan} />
           <Route path='/:chain/:contractAddress' component={Collection} />
           <Route path='/:chain?' component={Start} />

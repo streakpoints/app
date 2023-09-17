@@ -142,7 +142,6 @@ function Start(props) {
       <div style={{ maxWidth: '500px', margin: '0 auto', paddingBottom: '2em' }}>
         <div className='flex' style={{ alignItems: 'center' }}>
           <Link className={`flex-shrink ${chain === 'ethereum' ? 'filter selected' : 'filter'}`} to='/ethereum'>Ethereum</Link>
-          <Link className={`flex-shrink ${chain === 'polygon' ? 'filter selected' : 'filter'}`} to='/polygon'>Polygon</Link>
           <Link className={`flex-shrink ${chain === 'zora' ? 'filter selected' : 'filter'}`} to='/zora'>Zora</Link>
           <Link className={`flex-shrink ${chain === 'base' ? 'filter selected' : 'filter'}`} to='/base'>Base</Link>
           <Link className={`flex-shrink ${chain === 'optimism' ? 'filter selected' : 'filter'}`} to='/optimism'>Optimism</Link>

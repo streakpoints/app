@@ -32,15 +32,15 @@ const getMaxLookBackBlocks = (chainID) => {
   if (chainID == 1) {
     return 10;
   } else if (chainID == 10 || chainID == 137 || chainID == 8453 || chainID == 7777777) {
-    return 50;
+    return 40;
   }
 };
 
 const getOffsetBlocksFromTip = (chainID) => {
   if (chainID == 1) {
-    return 1;
+    return 2;
   } else if (chainID == 10 || chainID == 137 || chainID == 8453 || chainID == 7777777) {
-    return 5;
+    return 10;
   }
 };
 
