@@ -23,6 +23,7 @@ function App() {
       </div>
     );
   }
+  const isPrimarySale = window.location.host.indexOf('primary.sale') > -1;
   return (
     <div style={{ position: 'relative' }}>
       <Router>
@@ -30,7 +31,7 @@ function App() {
           <Route path='/collectors' component={Collectors} />
           <Route path='/account/:address?' component={Caravan} />
           <Route path='/:chain/:contractAddress' component={Collection} />
-          <Route path='/:chain?' component={Start} />
+          <Route path='/:chain?' component={isPrimarySale ? Collectors : Start} />
         </Switch>
       </Router>
     </div>

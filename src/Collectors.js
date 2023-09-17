@@ -81,6 +81,9 @@ function Collectors(props) {
           </select>
         </div>
       </div>
+      <div className='flex' style={{ padding: '1em', maxWidth: '500px', margin: '0 auto', textAlicn: 'center' }}>
+        <p>See the top financial supporters of new projects on ETH, Base, Zora, and Optimism.</p>
+      </div>
       {
         collectors.length > 0 &&
         <div>

@@ -154,6 +154,7 @@ const getMints = async (chainID, lastBlock) => {
 
   const mints = tokens.filter(t => t.valueGwei > 0 && t.isEOA);
 
+  /*
   if (chainID == 1 && mints.length > 0) {
     const scoreMap = {};
     mints.forEach(m => scoreMap[m.recipient] = 0);
@@ -184,6 +185,7 @@ const getMints = async (chainID, lastBlock) => {
     }));
     mints.forEach(m => m.score = scoreMap[m.recipient]);
   }
+  */
 
   console.log(`CHAIN: ${chainID}\tMINTS: ${mints.length}\tSKIPPED: ${tokens.length - mints.length}\tBLOCKS: ${1 + endBlock - startBlock}`);
 
