@@ -38,10 +38,12 @@ const chains = {
   7777777: 'zora',
 };
 
+const DEFAULT_LIMIT = 10;
+
 function Collectors(props) {
   const [collectors, setCollectors] = useState([]);
   const [range, setRange] = useState('day');
-  const [limit, setLimit] = useState(25);
+  const [limit, setLimit] = useState(DEFAULT_LIMIT);
   const dims = '80px';
   useEffect(() => {
     data.getTopCollectors({ range }).then(async r => {
@@ -50,7 +52,7 @@ function Collectors(props) {
   }, [range]);
 
   const changeRange = range => {
-    setLimit(25);
+    setLimit(DEFAULT_LIMIT);
     setCollectors([]);
     setRange(range);
   }
@@ -81,8 +83,8 @@ function Collectors(props) {
           </select>
         </div>
       </div>
-      <div className='flex' style={{ padding: '1em', maxWidth: '500px', margin: '0 auto', textAlicn: 'center' }}>
-        <p>See the top financial supporters of new projects on ETH, Base, Zora, and Optimism.</p>
+      <div className='flex' style={{ maxWidth: '500px', margin: '0 auto', textAlign: 'center' }}>
+        <p>Discover the top collectors of new projects on Ethereum, Base, Zora, and Optimism.</p>
       </div>
       {
         collectors.length > 0 &&
@@ -100,6 +102,7 @@ function Collectors(props) {
                         marginBottom: '.5em',
                         border: '1px solid #CCC',
                         borderRadius: '6px',
+                        overflow: 'hidden',
                         alignItems: 'center'
                       }}
                       className='flex'
@@ -115,13 +118,18 @@ function Collectors(props) {
                         }
                       </div>
                       <div className='flex-grow' style={{ padding: '.5em 1em' }}>
-                        <span style={{ fontWeight: 'bold' }}>{spentEth} ETH</span> from <Link
-                          style={{ fontWeight: 'bold' }}
+                        <Link
+                          style={{ fontWeight: 'bold', fontSize: '1.2em' }}
                           className='collection-link'
                           to={`/account/${collector.recipient}`}
                         >
-                          {collector.ens || (collector.recipient.slice(0, 6) + '...' + collector.recipient.slice(-4))}
+                          👤 {collector.ens || (collector.recipient.slice(0, 6) + '...' + collector.recipient.slice(-4))}
                         </Link>
+                        <div style={{ fontSize: '.8em' }}>
+                          <span>{spentEth} <i class="fa-brands fa-ethereum"></i> Spent</span>
+                          <span> · {collector.userCollections.reduce((t, c) => t + c.num_collected, 0)}</span>
+                          <span> Collected</span>
+                        </div>
                       </div>
                     </div>
                   )
@@ -140,7 +148,7 @@ function Collectors(props) {
                       padding: '1em',
                       cursor: 'pointer'
                     }}
-                    onClick={() => setLimit(limit + 25)}
+                    onClick={() => setLimit(limit + DEFAULT_LIMIT)}
                   >
                     Load More
                   </div>

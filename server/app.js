@@ -668,7 +668,7 @@ const genFeeds = async () => {
           contract_address,
           MAX(token_id) AS latest_token_id,
           MAX(create_time) AS last_mint_time,
-          COUNT(DISTINCT contract_address) AS num_collected,
+          COUNT(*) AS num_collected,
           SUM(value_gwei) AS collection_spend
         FROM mint
         USE INDEX (feed)
