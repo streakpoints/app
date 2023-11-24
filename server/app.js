@@ -11,9 +11,15 @@ const ethers = require('ethers');
 const dotenv = require('dotenv');
 const path = require('path');
 const schedule = require('node-schedule');
-const request = require("request-promise");
+const request = require('request-promise');
+const bcrypt = require('bcrypt');
+const { formatPhoneNumberIntl, isValidPhoneNumber } = require('react-phone-number-input');
 
 dotenv.config({ path: path.join(__dirname, '.env') });
+
+const accountSid = process.env.TWILIO_ACCOUNT_SID;
+const authToken = process.env.TWILIO_AUTH_TOKEN;
+const twilioClient = require('twilio')(accountSid, authToken);
 
 const blockchain = require('./blockchain');
 
@@ -178,31 +184,6 @@ app.get('/-/api/collection', async (req, res) => {
   jsonResponse(res, null, collection);
 });
 
-app.get('/-/api/user-tokens', async (req, res) => {
-  const userAddress = (req.query.userAddress || '').toLowerCase();
-  const limit = Math.min(parseInt(req.query.limit) || 10, 9);
-  const offset = parseInt(req.query.offset) || 0;
-
-  const [mints] = await pool.query(
-    `
-    SELECT *
-    FROM mint
-    WHERE recipient = ?
-    ORDER BY id DESC
-    LIMIT ?,?
-    `,
-    [
-      userAddress,
-      offset,
-      limit
-    ]
-  );
-  await Promise.all(mints.map(async (mint) => {
-    mint.token_uri = await blockchain.getTokenURI(mint.chain_id, mint.contract_address, mint.token_id);
-  }));
-  jsonResponse(res, null, mints);
-});
-
 app.get('/-/api/top-collectors', async (req, res) => {
   const contractAddress = (req.query.contractAddress || '').toLowerCase();
   if (contractAddress.length == 0) {
@@ -244,20 +225,6 @@ app.get('/-/api/top-collectors', async (req, res) => {
     );
     jsonResponse(res, null, topCollectors);
   }
-});
-
-app.get('/-/api/collection-owners', async (req, res) => {
-  const collectionAddress = (req.query.collectionAddress || '').toLowerCase();
-  const [recipients] = await pool.query(
-    `
-    SELECT DISTINCT recipient
-    FROM mint
-    WHERE contract_address = ?
-    LIMIT 10000
-    `,
-    [ collectionAddress ]
-  );
-  jsonResponse(res, null, recipients);
 });
 
 app.get('/-/api/tokens', async (req, res) => {
@@ -364,62 +331,6 @@ app.get('/-/api/ens', async (req, res) => {
   jsonResponse(res, null, hitList);
 });
 
-app.get('/-/api/overlap', async (req, res) => {
-  const chain = req.query.chain || 'ethereum';
-  const chainID = chains[chain];
-  const contractAddress = req.query.contractAddress;
-  if (chainIDs.indexOf(chainID) < 0) {
-    jsonResponse(res, new Error('Invalid Chain'));
-    return;
-  }
-  const [recipients] = await pool.query(
-    `
-    SELECT DISTINCT recipient
-    FROM mint
-    WHERE contract_address = ?
-    LIMIT 10000
-    `,
-    [ contractAddress ]
-  );
-  const recipientMap = {};
-  recipients.forEach(r => recipientMap[r.recipient] = true);
-  const statMap = {};
-  mintCache['all'].forEach(m => {
-    if (m.contract_address != contractAddress && recipientMap[m.recipient]) {
-      if (!statMap[m.contract_address]) {
-        statMap[m.contract_address] = {
-          counter: 0,
-          spent: 0,
-          chain_id: m.chain_id,
-        };
-      }
-      statMap[m.contract_address].counter++;
-      statMap[m.contract_address].spent += m.value_gwei;
-    }
-  });
-  const stats = Object.keys(statMap)
-  .sort((contractA, contractB) => statMap[contractA].counter > statMap[contractB].counter ? -1 : 1)
-  .slice(0, 30) // top 30
-  .map(contract_address => ({
-    contract_address,
-    num_collectors: statMap[contract_address].counter,
-    spent: statMap[contract_address].spent,
-    chain_id: statMap[contract_address].chain_id,
-  }));
-  const [collections] = await pool.query(
-    `
-    SELECT *
-    FROM collection
-    WHERE contract_address IN (${`,?`.repeat(stats.length + 1).slice(1)})
-    `,
-    stats.map(m => m.contract_address).concat([contractAddress]),
-  );
-  jsonResponse(res, null, {
-    stats,
-    collections,
-  });
-});
-
 const getCastHash = async (user, hashPrefix) => {
   const response = await request(`https://client.warpcast.com/v2/user-thread-casts?castHashPrefix=${hashPrefix}&username=${user}&limit=1`);
   const casts = JSON.parse(response).result.casts;
@@ -468,6 +379,150 @@ app.post('/-/api/recast', async (req, res) => {
   } catch (e) {
     jsonResponse(res, e);
   }
+});
+
+app.get('/-/api/account', async (req, res) => {
+  // const contractAddress = (req.query.contractAddress || '').toLowerCase();
+  if (req.session.account) {
+    const [accounts] = await pool.query(
+      `
+      SELECT * FROM account WHERE id = ?
+      `,
+      [ req.session.account.id ]
+    );
+    jsonResponse(res, null, accounts[0]);
+  } else {
+    jsonResponse(res, null, null);
+  }
+});
+
+app.post('/-/api/login', async (req, res) => {
+  const { address, signature } = req.body;
+  try {
+    const loginNonce = req.session.ln;
+    if (!loginNonce) {
+      throw new Error('Invalid code');
+    }
+    const message = `Signing in to StreakPoints. Code: ${loginNonce}`;
+    const signer = blockchain.recoverSigner(message, signature);
+    if (address !== signer) {
+      throw new Error('Signature mismatch');
+    }
+    await pool.query(
+      `
+      INSERT INTO account (address) VALUES (?)
+      ON DUPLICATE KEY UPDATE login_time = NOW()
+      `,
+      [ address ]
+    );
+    const [accounts] = await pool.query(
+      `
+      SELECT * FROM account WHERE address = ?
+      `,
+      [ address ]
+    );
+    req.session.account = accounts[0];
+    delete req.session.ln;
+    jsonResponse(res, null, accounts[0]);
+  } catch (e) {
+    jsonResponse(res, e);
+  }
+});
+
+app.get('/-/api/logout', async (req, res) => {
+  delete req.session.ln;
+  delete req.session.account;
+  jsonResponse(res, null, null);
+});
+
+app.get('/-/api/login-nonce', async (req, res) => {
+  const nonce = Math.floor(Math.random() * 1_000_000);
+  req.session.ln = nonce;
+  jsonResponse(res, null, nonce);
+});
+
+app.get('/-/api/session', async (req, res) => {
+  jsonResponse(res, null, req.session);
+});
+
+app.post('/-/api/account/verify-start', async (req, res) => {
+  const { phoneNumber } = req.body;
+  if (!isValidPhoneNumber(phoneNumber)) {
+    jsonResponse(res, new Error('Invalid phone number'));
+    return;
+  }
+  const v = await twilioClient.verify.v2.services('VAe8d72203ec5c5edcfbe4d5430205a09f').verifications.create({
+    to: phoneNumber,
+    channel: 'sms'
+  });
+
+  req.session.vid = v.sid;
+
+  jsonResponse(res, null, 'OK');
+});
+
+app.post('/-/api/account/verify-complete', async (req, res) => {
+  if (!req.session.account) {
+    jsonResponse(res, new Error('No account'));
+    return;
+  }
+  const { phoneNumber, phonePin } = req.body;
+  if (!isValidPhoneNumber(phoneNumber)) {
+    jsonResponse(res, new Error('Invalid phone number'));
+    return;
+  }
+  const vc = await twilioClient.verify.v2.services('VAe8d72203ec5c5edcfbe4d5430205a09f').verificationChecks.create({
+    to: phoneNumber,
+    code: phonePin
+  });
+  if (vc.sid !== req.session.vid) {
+    jsonResponse(res, null, 'Invalid attempt');
+  } else if (!vc.valid || vc.status !== 'approved') {
+    jsonResponse(res, null, 'Verification incomplete');
+  } else {
+    const hash = await blockchain.spSign(formatPhoneNumberIntl(phoneNumber));
+    try {
+      await pool.query(
+        `
+        INSERT INTO account_verification (account_id, phone_hash) VALUES (?,?)
+        `,
+        [ req.session.account.id, hash ]
+      );
+      await pool.query(
+        `
+        UPDATE account SET verified = TRUE WHERE id = ?
+        `,
+        [ req.session.account.id ]
+      );
+      req.session.account.verified = true;
+      jsonResponse(res, null, req.session.account);
+    } catch (e) {
+      jsonResponse(res, new Error('Unable to verify this phone'));
+    }
+  }
+});
+
+app.get('/-/api/checkin/verify', async (req, res) => {
+  if (!req.session.account) {
+    jsonResponse(res, new Error('Connect wallet and sign in first'));
+  } else if (!req.session.account.verified) {
+    jsonResponse(res, new Error('Not verified'));
+  } else {
+    const signature = await blockchain.verifyCheckin(req.session.account.address);
+    jsonResponse(res, null, signature);
+  }
+});
+
+app.get('/-/api/checkin', async (req, res) => {
+  const [checkins] = await pool.query(
+    `
+    SELECT checkin.*, ens.name FROM checkin
+    LEFT JOIN ens ON checkin.address = ens.address
+    ORDER BY id DESC
+    `,
+    []
+  );
+  jsonResponse(res, null, checkins);
 });
 
 app.get('/-/api/status', async (req, res) => {
@@ -739,10 +794,34 @@ const scanCasts = async () => {
   }));
 };
 
+const scanCheckins = async () => {
+  const checkins = await blockchain.getCheckins(0);
+  if (checkins.length > 0) {
+    const values = [];
+    checkins.forEach(c => {
+      values.push(c.address);
+      values.push(c.epoch);
+      values.push(c.streak);
+      values.push(c.points);
+      values.push(c.txid);
+    });
+    await pool.query(
+      `
+      INSERT INTO checkin (address, epoch, streak, points, txid)
+      VALUES ${`,(?,?,?,?,?)`.repeat(checkins.length).slice(1)}
+      ON DUPLICATE KEY UPDATE txid = VALUES(txid)
+      `,
+      values
+    );
+    lookupENS(checkins.map(c => c.address));
+  }
+};
 
 const CRON_MIN = '* * * * *';
 const CRON_5MIN = '*/5 * * * *';
-schedule.scheduleJob(CRON_MIN, scanCasts);
-schedule.scheduleJob(CRON_MIN, scanChains);
-schedule.scheduleJob(CRON_5MIN, genFeeds);
-genFeeds();
+// schedule.scheduleJob(CRON_MIN, scanCasts);
+// schedule.scheduleJob(CRON_MIN, scanChains);
+// schedule.scheduleJob(CRON_5MIN, genFeeds);
+schedule.scheduleJob(CRON_MIN, scanCheckins);
+// genFeeds();
+scanCheckins();
