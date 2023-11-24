@@ -73,8 +73,8 @@ directives['default-src'] = [
   "data:",
   "ii6mdnux2ukcnuqwgfbmefi7am0fupqi.lambda-url.us-west-2.on.aws",
   "https://polygon-rpc.com",
-  "*.walletconnect.org",
-  "*.walletconnect.com"
+  "relay.walletconnect.org",
+  "relay.walletconnect.com"
 ];
 directives['script-src'] = [ "'self'", "'unsafe-inline'", "platform.twitter.com", "*.fontawesome.com" ];
 directives['img-src'] = [ "*", "data:" ];
