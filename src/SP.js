@@ -243,7 +243,7 @@ function SP(props) {
               {
                 checkins.map(c => (
                   <tr key={`${c.address}-${c.epoch}`}>
-                    <td><a href={`https://polygonscan.com/address/${c.address}`} target='_blank'>{c.ens || (`${c.address.substr(0, 6)}...${c.address.substr(-4)}`)}</a></td>
+                    <td><a href={`https://polygonscan.com/address/${c.address}`} target='_blank'>{c.name || (`${c.address.substr(0, 6)}...${c.address.substr(-4)}`)}</a></td>
                     <td>{c.streak}</td>
                     <td>{c.points}</td>
                   </tr>
