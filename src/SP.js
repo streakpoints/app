@@ -42,6 +42,8 @@ const renderer = ({
   return (
     <div
       style={{
+        fontWeight: 'bold',
+        color: 'red',
         textAlign: 'center',
         padding: '0 0 2em 0',
       }}
@@ -243,7 +245,11 @@ function SP(props) {
               {
                 checkins.map(c => (
                   <tr key={`${c.address}-${c.epoch}`}>
-                    <td><a href={`https://polygonscan.com/address/${c.address}`} target='_blank'>{c.name || (`${c.address.substr(0, 6)}...${c.address.substr(-4)}`)}</a></td>
+                    <td>
+                      <a href={`https://polygonscan.com/token/0x89cd4930cab950dc4594c352dee828de917dd141?a=${c.address}`} target='_blank'>{c.name || (`${c.address.substr(0, 6)}...${c.address.substr(-4)}`)}</a>
+                      <br />
+                      +{c.sp} $SP
+                    </td>
                     <td>{c.streak}</td>
                     <td>{c.points}</td>
                   </tr>
@@ -321,6 +327,9 @@ function SP(props) {
 const STable = styled.table`
   width: 100%;
   text-align: right;
+  & td {
+    padding-bottom: .25em;
+  }
   & tr > *:first-child {
     text-align: left;
   }

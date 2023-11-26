@@ -237,6 +237,23 @@ const verifyCheckin = async (address) => {
 
 const spSign = (message) => walletSP.signMessage(message);
 
+const getSPMined = async (txid) => {
+  const provider = getProvider(137);
+  const txn = await provider.getTransactionReceipt(txid);
+  if (txn.logs) {
+    const coinsTransferred = txn.logs
+      .filter(l => l.topics[0] === '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef')
+      .map(l => {
+        const coins = ethers.BigNumber.from(l.data).toString();
+        return parseInt(ethers.utils.formatEther(coins));
+      });
+    if (coinsTransferred.length > 0) {
+      return coinsTransferred[0];
+    }
+  }
+  return null;
+}
+
 module.exports = {
   recoverSigner,
   verifyUserIsOwner,
@@ -249,4 +266,5 @@ module.exports = {
   verifyCheckin,
   getCheckins,
   spSign,
+  getSPMined,
 };

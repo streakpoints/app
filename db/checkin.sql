@@ -4,6 +4,7 @@ CREATE TABLE `checkin` (
     `epoch`                         int NOT NULL,
     `streak`                        int NOT NULL,
     `points`                        int NOT NULL,
+    `sp`                            int DEFAULT NULL,
     `txid`                          varchar(66) NOT NULL,
     `create_time`                   datetime DEFAULT CURRENT_TIMESTAMP,
 

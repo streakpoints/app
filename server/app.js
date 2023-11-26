@@ -825,6 +825,25 @@ const scanCheckins = async () => {
     );
     lookupENS(checkins.map(c => c.address));
   }
+  getSPMined();
+};
+
+const getSPMined = async () => {
+  const [checkins] = await pool.query(
+    `SELECT * FROM checkin WHERE sp IS NULL`
+  );
+  for (checkin of checkins) {
+    const coins = await blockchain.getSPMined(checkin.txid);
+    if (coins !== null) {
+      await pool.query(
+        `UPDATE checkin SET sp = ? WHERE id = ?`,
+        [
+          coins,
+          checkin.id
+        ]
+      );
+    }
+  }
 };
 
 const CRON_MIN = '* * * * *';

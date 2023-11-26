@@ -22,7 +22,7 @@ import {
 } from '@rainbow-me/rainbowkit';
 
 function App() {
-  const spDev = false;
+  const spDev = true;
   if (window.location.host.indexOf('streakpoints.com') > -1 || spDev) {
     const { chains, publicClient } = configureChains([polygon],[publicProvider()]);
     const WALLET_CONNECT_PROJECT_ID = '6c4e35db337f7801ccb9ce0d5e481c33';
