@@ -210,54 +210,52 @@ function SP(props) {
           Try not to do that. GLHF!
         </p>
       </div>
-      <div style={{ maxWidth: '500px', margin: '0 auto', paddingBottom: '2em' }}>
-        <div style={{ padding: '1em' }}>
-          {
-            epochEndTime && (
-              <Countdown
-                date={epochEndTime.getTime()}
-                renderer={renderer}
-              />
-            )
-          }
-          <div style={{ textAlign: 'center' }}>
-            <Button disabled={!write} onClick={checkin}>Checkin</Button>
-          </div>
-          <br />
-          <br />
-          {
-            view === VIEWS.NONE && (
-              <div style={{ color: 'red' }}>
-                {error || writeError?.message.split('\n\n')[0]}
-              </div>
-            )
-          }
-          <h3>Recent checkins</h3>
-          <STable>
-            <thead>
-              <tr>
-                <th>account</th>
-                <th>streak</th>
-                <th>points</th>
-              </tr>
-            </thead>
-            <tbody>
-              {
-                checkins.map(c => (
-                  <tr key={`${c.address}-${c.epoch}`}>
-                    <td>
-                      <a href={`https://polygonscan.com/token/0x89cd4930cab950dc4594c352dee828de917dd141?a=${c.address}`} target='_blank'>{c.name || (`${c.address.substr(0, 6)}...${c.address.substr(-4)}`)}</a>
-                      <br />
-                      +{c.sp} $SP
-                    </td>
-                    <td>{c.streak}</td>
-                    <td>{c.points}</td>
-                  </tr>
-                ))
-              }
-            </tbody>
-          </STable>
+      <div style={{ maxWidth: '500px', margin: '0 auto', padding: '0 1em 2em 1em' }}>
+        {
+          epochEndTime && (
+            <Countdown
+              date={epochEndTime.getTime()}
+              renderer={renderer}
+            />
+          )
+        }
+        <div style={{ textAlign: 'center' }}>
+          <Button disabled={!write} onClick={checkin}>Checkin</Button>
         </div>
+        <br />
+        <br />
+        {
+          view === VIEWS.NONE && (
+            <div style={{ color: 'red' }}>
+              {error || writeError?.message.split('\n\n')[0]}
+            </div>
+          )
+        }
+        <h3>Recent checkins</h3>
+        <STable>
+          <thead>
+            <tr>
+              <th>account</th>
+              <th>streak</th>
+              <th>points</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              checkins.map(c => (
+                <tr key={`${c.address}-${c.epoch}`}>
+                  <td>
+                    <a href={`https://polygonscan.com/token/0x89cd4930cab950dc4594c352dee828de917dd141?a=${c.address}`} target='_blank'>{c.name || (`${c.address.substr(0, 6)}...${c.address.substr(-4)}`)}</a>
+                    <br />
+                    +{c.sp} $SP
+                  </td>
+                  <td>{c.streak}</td>
+                  <td>{c.points}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </STable>
       </div>
       <Modal
         presented={view !== VIEWS.NONE}
