@@ -139,7 +139,11 @@ function SP(props) {
       // write({ args: [verification], from: address });
     } catch (e) {
       console.log(e);
-      setError(e.message);
+      if (e.message && e.message.indexOf('Already checked in') > -1) {
+        setError('Already checked in for today');
+      } else {
+        setError(e.message);
+      }
     }
     setLoading(false);
   };
