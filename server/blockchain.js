@@ -249,6 +249,8 @@ const getSPMined = async (txid) => {
       });
     if (coinsTransferred.length > 0) {
       return coinsTransferred[0];
+    } else {
+      return 0;
     }
   }
   return null;
