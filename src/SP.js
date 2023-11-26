@@ -148,6 +148,11 @@ function SP(props) {
   const confirmPin = async () => {
     setLoading(true);
     setError(null);
+    if (!phonePin || phoneNumber.length != 6) {
+      setError('Pin must be 6 digits');
+      setLoading(false);
+      return;
+    }
     try {
       await confirmPhonePin({ phoneNumber, phonePin });
       setView(VIEWS.NONE);
@@ -298,7 +303,7 @@ function SP(props) {
               />
               <br />
               <br />
-              <Button disabled={loading} onClick={confirmPin}>Confirm Pin</Button>
+              <Button disabled={loading || !phonePin || phonePin.length !== 6} onClick={confirmPin}>Confirm Pin</Button>
               <div style={{ color: 'red' }}>
                 {error}
               </div>
@@ -342,6 +347,10 @@ const Button = styled.button`
   border-radius: 12px;
   border: 0;
   padding: .75em 1em;
+  &:disabled {
+    background-color: rgb(14, 118, 253, .6);
+    cursor: not-allowed;
+  }
 `
 
 export default SP;
