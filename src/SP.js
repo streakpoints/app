@@ -120,12 +120,15 @@ function SP(props) {
       setLoading(true);
       if (!address) {
         setError('Connect Wallet first');
+        setLoading(false);
         return;
       } else if (!account) {
         setView(VIEWS.LOGIN)
+        setLoading(false);
         return;
       } else if (!account.verified) {
         setView(VIEWS.SEND_PHONE_PIN);
+        setLoading(false);
         return;
       }
 
