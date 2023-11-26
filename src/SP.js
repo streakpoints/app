@@ -6,7 +6,9 @@ import PhoneInput, { isPossiblePhoneNumber } from 'react-phone-number-input';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useAccount, useSignMessage, useContractWrite } from 'wagmi';
 import Countdown from 'react-countdown';
+import { ethers } from 'ethers';
 
+import { useEthersSigner } from './ethers-provider';
 import { Modal } from './Modal';
 import {
   getAccount,
@@ -70,6 +72,7 @@ function SP(props) {
   const [phonePin, setPhonePin] = useState('');
   const [view, setView] = useState(VIEWS.NONE);
   const [checkins, setCheckins] = useState([]);
+  const [checkinSuccess, setCheckinSuccess] = useState(false);
   const epochEndTime = new Date((Math.floor((new Date().getTime() / 86_400_000)) + 1) * 86_400_000);
 
   const {
@@ -77,6 +80,8 @@ function SP(props) {
     // isConnecting,
     isDisconnected,
   } = useAccount();
+
+  const signer = useEthersSigner();
 
   const {
     data: signData,
@@ -86,19 +91,6 @@ function SP(props) {
   } = useSignMessage({
     message: `Signing in to StreakPoints. Code: ${loginNonce}`,
   });
-
-  const {
-    data: writeData,
-    // isLoading: writeLoading,
-    isSuccess: writeSuccess,
-    error: writeError,
-    write,
-  } = useContractWrite({
-    address: '0x89cD4930cAB950dc4594C352Dee828dE917Dd141',
-    abi: abiSP,
-    functionName: 'checkin',
-  });
-
 
   const loadAccount = async () => {
     const account = await getAccount();
@@ -125,12 +117,28 @@ function SP(props) {
   const checkin = async () => {
     try {
       setError(null);
+      setLoading(true);
+      if (!address) {
+        setError('Connect Wallet first');
+        return;
+      } else if (!account) {
+        setView(VIEWS.LOGIN)
+        return;
+      } else if (!account.verified) {
+        setView(VIEWS.SEND_PHONE_PIN);
+        return;
+      }
+
+      const contract = new ethers.Contract('0x89cD4930cAB950dc4594C352Dee828dE917Dd141', abiSP, signer);
       const verification = await getCheckinVerification();
-      write({ args: [verification], from: address });
+      await contract.checkin(verification, { from: address });
+      setCheckinSuccess(true);
+      // write({ args: [verification], from: address });
     } catch (e) {
       console.log(e);
       setError(e.message);
     }
+    setLoading(false);
   };
 
   const sendPin = async () => {
@@ -148,7 +156,7 @@ function SP(props) {
   const confirmPin = async () => {
     setLoading(true);
     setError(null);
-    if (!phonePin || phoneNumber.length != 6) {
+    if (!phonePin || phonePin.length != 6) {
       setError('Pin must be 6 digits');
       setLoading(false);
       return;
@@ -176,10 +184,10 @@ function SP(props) {
   }, [signSuccess, signData]);
 
   useEffect(() => {
-    if (writeSuccess && writeData) {
+    if (checkinSuccess) {
       window.alert('Checkin broadcast! Make sure it gets confirmed');
     }
-  }, [writeSuccess, writeData]);
+  }, [checkinSuccess]);
 
   // Sync Backend auth state based on client wallet
   useEffect(() => {
@@ -225,14 +233,14 @@ function SP(props) {
           )
         }
         <div style={{ textAlign: 'center' }}>
-          <Button disabled={!write} onClick={checkin}>Checkin</Button>
+          <Button onClick={checkin} disabled={loading}>Checkin</Button>
         </div>
         <br />
         <br />
         {
           view === VIEWS.NONE && (
             <div style={{ color: 'red' }}>
-              {error || writeError?.message.split('\n\n')[0]}
+              {error}
             </div>
           )
         }
