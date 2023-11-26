@@ -208,6 +208,18 @@ function SP(props) {
     }
   }, [init, account, address, isDisconnected]);
 
+  const getTimeAgo = (elapsed) => {
+    if (elapsed < 60) {
+      return 'just now';
+    } else if (elapsed < 3600) {
+      return `${Math.floor(elapsed / 60)}m ago`;
+    } else if (elapsed < 86400) {
+      return `${Math.floor(elapsed / 3600)}h ago`;
+    } else {
+      return `${Math.floor(elapsed / 86400)}d ago`;
+    }
+  };
+
   return (
     <div style={{ position: 'relative' }}>
       <div style={{ position: 'absolute', top: '1em', right: '1em' }}>
@@ -263,9 +275,14 @@ function SP(props) {
                   <td>
                     <a href={`https://polygonscan.com/token/0x89cd4930cab950dc4594c352dee828de917dd141?a=${c.address}`} target='_blank'>{c.name || (`${c.address.substr(0, 6)}...${c.address.substr(-4)}`)}</a>
                     <br />
-                    +{c.sp} $SP
+                    <span style={{ fontWeight: 'bold', fontSize: '.75em', color: '#666' }}>{getTimeAgo(c.elapsed)}</span>
+                    {
+                      c.sp > 0 && (
+                        <span style={{ fontWeight: 'bold', fontSize: '.75em', color: '#666', marginLeft: '.5em' }}>+{c.sp} $SP</span>
+                      )
+                    }
                   </td>
-                  <td>{c.streak}</td>
+                  <td>{c.streak} day{c.streak === 1 ? '' : 's'}</td>
                   <td>{c.points}</td>
                 </tr>
               ))

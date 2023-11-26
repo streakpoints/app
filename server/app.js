@@ -526,7 +526,11 @@ app.get('/-/api/checkin/verify', async (req, res) => {
 app.get('/-/api/checkin', async (req, res) => {
   const [checkins] = await pool.query(
     `
-    SELECT checkin.*, ens.name FROM checkin
+    SELECT
+      checkin.*,
+      ens.name,
+      UNIX_TIMESTAMP(NOW()) - UNIX_TIMESTAMP(create_time) AS elapsed
+    FROM checkin
     LEFT JOIN ens ON checkin.address = ens.address
     ORDER BY id DESC
     `,
