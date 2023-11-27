@@ -76,7 +76,8 @@ directives['default-src'] = [
   "wss://relay.walletconnect.org",
   "wss://relay.walletconnect.com",
   "https://*.walletconnect.org",
-  "https://*.walletconnect.com"
+  "https://*.walletconnect.com",
+  "https://api.biconomy.io"
 ];
 directives['script-src'] = [ "'self'", "'unsafe-inline'", "platform.twitter.com", "*.fontawesome.com" ];
 directives['img-src'] = [ "*", "data:" ];
