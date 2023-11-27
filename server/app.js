@@ -75,8 +75,10 @@ directives['default-src'] = [
   "https://polygon-rpc.com",
   "wss://relay.walletconnect.org",
   "wss://relay.walletconnect.com",
+  "wss://*.walletlink.org",
   "https://*.walletconnect.org",
   "https://*.walletconnect.com",
+  "https://*.walletlink.org",
   "https://api.biconomy.io"
 ];
 directives['script-src'] = [ "'self'", "'unsafe-inline'", "platform.twitter.com", "*.fontawesome.com" ];
