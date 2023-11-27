@@ -277,10 +277,11 @@ function SP(props) {
           💫&nbsp;&nbsp;StreakPoints
         </div>
         <p>
-          StreakPoints is about showing committment and earning along the way.
-          Each day you continue your streak (by checking in here) you earn 1 point.
-          If your streak is longer than 1 day, you earn $SP as well.
-          One million $SP is distributed to people based on their points.
+          Let&apos;s create the most valuable place on the internet.
+        </p>
+        <p>
+          Each day you checkin here, you earn 1 point.
+          One million $SP is distributed daily to people based on their points.
           If you miss a checkin, you lose ½ your points.
           Try not to do that. GLHF!
         </p>
