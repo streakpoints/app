@@ -167,7 +167,7 @@ function SP(props) {
       //*
       const contract = new ethers.Contract(contractSP, abiSP, signer);
       const verification = await getCheckinVerification();
-      const txid = await contract.checkin(verification, { from: address });
+      const txid = (await contract.checkin(verification, { from: address })).hash;
       const existingLocal = window.localStorage.getItem('sp-transactions');
       window.localStorage && window.localStorage.setItem('sp-transactions', `${new Date().getTime()}:${txid}${existingLocal ? `,${existingLocal}` : ''}`);
 
