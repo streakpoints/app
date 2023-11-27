@@ -10,14 +10,14 @@ export function walletClientToSigner(walletClient) {
   };
   const provider = new providers.Web3Provider(transport, network);
   const signer = provider.getSigner(account.address);
-  return signer;
+  return { provider, signer };
 }
  
 /** Hook to convert a viem Wallet Client to an ethers.js Signer. */
 export function useEthersSigner() {
   const { data: walletClient } = useWalletClient({ chainId: 137 });
   return React.useMemo(
-    () => (walletClient ? walletClientToSigner(walletClient) : undefined),
+    () => (walletClient ? walletClientToSigner(walletClient) : {}),
     [walletClient],
   );
 }

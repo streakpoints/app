@@ -9,6 +9,7 @@ import Countdown from 'react-countdown';
 import { ethers } from 'ethers';
 
 import { useEthersSigner } from './ethers-provider';
+import { getBiconomy } from './biconomy';
 import { Modal } from './Modal';
 import {
   getAccount,
@@ -73,6 +74,7 @@ function SP(props) {
   const [view, setView] = useState(VIEWS.NONE);
   const [checkins, setCheckins] = useState([]);
   const [checkinSuccess, setCheckinSuccess] = useState(false);
+  const [rerender, setRerender] = useState(0);
   const epochEndTime = new Date((Math.floor((new Date().getTime() / 86_400_000)) + 1) * 86_400_000);
 
   const {
@@ -81,7 +83,7 @@ function SP(props) {
     isDisconnected,
   } = useAccount();
 
-  const signer = useEthersSigner();
+  const { provider, signer } = useEthersSigner();
 
   const {
     data: signData,
@@ -114,6 +116,35 @@ function SP(props) {
     setView(VIEWS.LOGIN);
   };
 
+  const gaslessCheckin = async () => {
+    const biconomy = await getBiconomy(provider, 'zGd2BlLtI.682b7032-2bf1-431f-8c11-e657299c1300');
+    const biconomyProvider = biconomy.getEthersProvider();
+    const signer = biconomy.getSignerByAddress(address);
+    const contract = new ethers.Contract('0x89cD4930cAB950dc4594C352Dee828dE917Dd141', abiSP, signer);
+    const verification = await getCheckinVerification();
+    // Create your target method signature.
+    const { data } = await contract.populateTransaction.checkin(verification);
+
+    const gasLimit = await biconomyProvider.estimateGas({
+      to: '0x89cD4930cAB950dc4594C352Dee828dE917Dd141',
+      from: address,
+      data,
+    });
+
+    const txParams = {
+      data,
+      to: '0x89cD4930cAB950dc4594C352Dee828dE917Dd141',
+      from: address,
+      gasLimit: gasLimit.toNumber() + 100000,
+      signatureType: 'EIP712_SIGN',
+    };
+
+    const txid = await biconomyProvider.send('eth_sendTransaction', [txParams]);
+    const existingLocal = window.localStorage.getItem('sp-transactions');
+    window.localStorage.setItem('sp-transactions', `${new Date().getTime()}:${txid}${existingLocal ? `,${existingLocal}` : ''}`);
+    setRerender(rerender + 1);
+  };
+
   const checkin = async () => {
     try {
       setError(null);
@@ -131,10 +162,12 @@ function SP(props) {
         setLoading(false);
         return;
       }
-
+      await gaslessCheckin();
+      /*
       const contract = new ethers.Contract('0x89cD4930cAB950dc4594C352Dee828dE917Dd141', abiSP, signer);
       const verification = await getCheckinVerification();
       await contract.checkin(verification, { from: address });
+      //*/
       setCheckinSuccess(true);
       // write({ args: [verification], from: address });
     } catch (e) {
@@ -192,7 +225,7 @@ function SP(props) {
 
   useEffect(() => {
     if (checkinSuccess) {
-      window.alert('Checkin broadcast! Make sure it gets confirmed');
+      window.alert('Checkin submitted to the blockchain for verification');
     }
   }, [checkinSuccess]);
 
@@ -224,6 +257,16 @@ function SP(props) {
     }
   };
 
+  const now = new Date().getTime();
+  const localTransactionData = window.localStorage.getItem('sp-transactions');
+  const localTransactions = localTransactionData ? localTransactionData.split(',').map(ut => {
+    const [time, txid] = ut.split(':');
+    return {
+      elapsed: getTimeAgo(Math.floor((now - time) / 1000)),
+      txid,
+    }
+  }) : [];
+
   return (
     <div style={{ position: 'relative' }}>
       <div style={{ position: 'absolute', top: '1em', right: '1em' }}>
@@ -252,7 +295,10 @@ function SP(props) {
           )
         }
         <div style={{ textAlign: 'center' }}>
-          <Button onClick={checkin} disabled={loading}>Checkin</Button>
+          <Button onClick={checkin} disabled={loading}>
+            Checkin
+            {loading && <i className='fas fa-spinner fa-spin' style={{ marginLeft: '.5em' }} />}
+          </Button>
         </div>
         <br />
         <br />
@@ -260,6 +306,31 @@ function SP(props) {
           view === VIEWS.NONE && (
             <div style={{ color: 'red' }}>
               {error}
+            </div>
+          )
+        }
+        {
+          localTransactions.length > 0 && (
+            <div style={{ position: 'relative', marginBottom: '2em' }}>
+              <h3>
+                Track your checkins
+                <Button
+                  secondary style={{ zoom: '.5', top: '-.2em', right: '-.5em', position: 'relative' }}
+                  onClick={() => {
+                    window.localStorage.removeItem('sp-transactions');
+                    setRerender(rerender + 1);
+                  }}
+                >
+                  clear
+                </Button>
+              </h3>
+              {
+                localTransactions.map(ut => (
+                  <div key={ut.txid} style={{ marginBottom: '1em' }}>
+                    <a target='_blank' href={`https://polygonscan.com/tx/${ut.txid}`}>{ut.elapsed}</a>
+                  </div>
+                ))
+              }
             </div>
           )
         }
@@ -315,7 +386,10 @@ function SP(props) {
                 onChange={setPhoneNumber}
               />
               <br />
-              <Button disabled={!isPossiblePhoneNumber(phoneNumber || '')} onClick={sendPin}>Send Pin</Button>
+              <Button disabled={loading || !isPossiblePhoneNumber(phoneNumber || '')} onClick={sendPin}>
+                Send Pin
+                {loading && <i className='fas fa-spinner fa-spin' style={{ marginLeft: '.5em' }} />}
+              </Button>
               <div style={{ color: 'red' }}>
                 {error}
               </div>
@@ -335,7 +409,10 @@ function SP(props) {
               />
               <br />
               <br />
-              <Button disabled={loading || !phonePin || phonePin.length !== 6} onClick={confirmPin}>Confirm Pin</Button>
+              <Button disabled={loading || !phonePin || phonePin.length !== 6} onClick={confirmPin}>
+                Confirm Pin
+                {loading && <i className='fas fa-spinner fa-spin' style={{ marginLeft: '.5em' }} />}
+              </Button>
               <div style={{ color: 'red' }}>
                 {error}
               </div>
@@ -347,7 +424,10 @@ function SP(props) {
             <div>
               <h2>Sign in</h2>
               <p>Click the sign in button below to sign in using your wallet</p>
-              <Button disabled={loading} onClick={() => signMessage()}>Sign In</Button>
+              <Button disabled={loading} onClick={() => signMessage()}>
+                Sign In
+                {loading && <i className='fas fa-spinner fa-spin' style={{ marginLeft: '.5em' }} />}
+              </Button>
               <div style={{ color: 'red' }}>
                 {error}
               </div>
@@ -372,7 +452,7 @@ const STable = styled.table`
 
 const Button = styled.button`
   cursor: pointer;
-  background-color: rgb(14, 118, 253);
+  background-color: ${props => props.secondary ? '#666' : 'rgb(14, 118, 253)'};
   color: white;
   font-size: 1em;
   font-weight: bold;
