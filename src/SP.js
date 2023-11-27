@@ -167,7 +167,10 @@ function SP(props) {
       //*
       const contract = new ethers.Contract(contractSP, abiSP, signer);
       const verification = await getCheckinVerification();
-      await contract.checkin(verification, { from: address });
+      const txid = await contract.checkin(verification, { from: address });
+      const existingLocal = window.localStorage.getItem('sp-transactions');
+      window.localStorage && window.localStorage.setItem('sp-transactions', `${new Date().getTime()}:${txid}${existingLocal ? `,${existingLocal}` : ''}`);
+
       //*/
       setCheckinSuccess(true);
     } catch (e) {
@@ -314,7 +317,7 @@ function SP(props) {
           localTransactions.length > 0 && (
             <div style={{ position: 'relative', marginBottom: '2em' }}>
               <h3>
-                Track your checkins
+                Checkins from this device
                 <Button
                   secondary style={{ zoom: '.5', top: '-.2em', right: '-.5em', position: 'relative' }}
                   onClick={() => {

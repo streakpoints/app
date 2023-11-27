@@ -420,12 +420,19 @@ app.post('/-/api/login', async (req, res) => {
     if (address !== signer) {
       throw new Error('Signature mismatch');
     }
+    let verified = false;
+    try {
+      const name = await getENS(address);
+      verified = !!name;
+    } catch (e) {
+      // skip
+    }
     await pool.query(
       `
-      INSERT INTO account (address) VALUES (?)
+      INSERT INTO account (address, verified) VALUES (?,?)
       ON DUPLICATE KEY UPDATE login_time = NOW()
       `,
-      [ address ]
+      [ address, verified ]
     );
     const [accounts] = await pool.query(
       `
