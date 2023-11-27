@@ -162,14 +162,13 @@ function SP(props) {
         setLoading(false);
         return;
       }
-      await gaslessCheckin();
-      /*
+      //await gaslessCheckin();
+      //*
       const contract = new ethers.Contract('0x89cD4930cAB950dc4594C352Dee828dE917Dd141', abiSP, signer);
       const verification = await getCheckinVerification();
       await contract.checkin(verification, { from: address });
       //*/
       setCheckinSuccess(true);
-      // write({ args: [verification], from: address });
     } catch (e) {
       console.log(e);
       if (e.message && e.message.indexOf('Already checked in') > -1) {
