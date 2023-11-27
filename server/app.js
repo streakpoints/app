@@ -535,6 +535,22 @@ app.get('/-/api/checkin/verify', async (req, res) => {
 });
 
 app.get('/-/api/checkin', async (req, res) => {
+  const [checkinIDResults] = await pool.query(
+    `
+    SELECT address, MAX(id) AS id, MAX(create_time) AS create_time
+    FROM checkin
+    GROUP BY address
+    ORDER BY create_time DESC
+    LIMIT 20
+    `
+  );
+
+  const checkinIDs = checkinIDResults.map(checkin => checkin.id);
+
+  if (checkinIDs.length == 0) {
+    jsonResponse(res, null, []);
+    return;
+  }
   const [checkins] = await pool.query(
     `
     SELECT
@@ -543,9 +559,10 @@ app.get('/-/api/checkin', async (req, res) => {
       UNIX_TIMESTAMP(NOW()) - UNIX_TIMESTAMP(create_time) AS elapsed
     FROM checkin
     LEFT JOIN ens ON checkin.address = ens.address
-    ORDER BY id DESC
+    WHERE checkin.id IN (${`,?`.repeat(checkinIDs.length).slice(1)})
+    ORDER BY checkin.id DESC
     `,
-    []
+    checkinIDs
   );
   jsonResponse(res, null, checkins);
 });
