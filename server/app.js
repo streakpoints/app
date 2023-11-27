@@ -819,19 +819,20 @@ const scanCheckins = async () => {
       values.push(c.epoch);
       values.push(c.streak);
       values.push(c.points);
+      values.push(c.coins);
       values.push(c.txid);
     });
     await pool.query(
       `
-      INSERT INTO checkin (address, epoch, streak, points, txid)
-      VALUES ${`,(?,?,?,?,?)`.repeat(checkins.length).slice(1)}
+      INSERT INTO checkin (address, epoch, streak, points, sp, txid)
+      VALUES ${`,(?,?,?,?,?,?)`.repeat(checkins.length).slice(1)}
       ON DUPLICATE KEY UPDATE txid = VALUES(txid)
       `,
       values
     );
     lookupENS(checkins.map(c => c.address));
   }
-  getSPMined();
+  // getSPMined();
 };
 
 const getSPMined = async () => {

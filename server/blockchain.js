@@ -13,7 +13,7 @@ const zoraProvider = new ethers.providers.StaticJsonRpcProvider('https://rpc.zor
 const baseProvider = new ethers.providers.StaticJsonRpcProvider('https://mainnet.base.org');
 const optimismProvider = new ethers.providers.StaticJsonRpcProvider('https://mainnet.optimism.io');
 
-const contractSP = '0x89cD4930cAB950dc4594C352Dee828dE917Dd141';
+const contractSP = '0x0c78A4621C4674BCD110F3a29308a9fE37B2Eb59';
 
 const getProvider = networkID => {
   if (networkID == 1) {
@@ -176,13 +176,22 @@ const getCheckins = async (lastBlock) => {
   const contract = new ethers.Contract(contractSP, abiSP, provider);
   const logs = await contract.queryFilter('Checkin', startBlock, endBlock);
   console.log(`CHECKINS: ${logs.length}\tSTART: ${startBlock}\tEND: ${endBlock}\tBLOCKS: ${endBlock - startBlock}`);
-  return logs.map(l => ({
-    address: l.args.user,
-    epoch: l.args.epoch.toNumber(),
-    streak: l.args.streak.toNumber(),
-    points: l.args.points.toNumber(),
-    txid: l.transactionHash,
-  }));
+  return logs.map(l => {
+    let coins = null;
+    try {
+      coins = parseInt(ethers.utils.formatEther(l.args.coins.toString()));
+    } catch (e) {
+      console.log(e);
+    }
+    return {
+      address: l.args.user,
+      epoch: l.args.epoch.toNumber(),
+      streak: l.args.streak.toNumber(),
+      points: l.args.points.toNumber(),
+      coins: coins,
+      txid: l.transactionHash,
+    }
+  });
 }
 
 
