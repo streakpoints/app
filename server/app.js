@@ -69,6 +69,10 @@ const directives = helmet.contentSecurityPolicy.getDefaultDirectives();
 directives['default-src'] = ["*", "'self'"];
 directives['script-src'] = [ "*", "'self'", "'unsafe-inline'" ];
 directives['img-src'] = [ "*", "data:" ];
+app.use((req, res, next) => {
+  console.log(req.originalUrl);
+  next();
+});
 app.use(helmet({
   crossOriginEmbedderPolicy: false,
   contentSecurityPolicy: {
