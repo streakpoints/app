@@ -519,11 +519,8 @@ app.get('/-/api/checkin/verify', async (req, res) => {
   } else if (!req.session.account.verified) {
     jsonResponse(res, new Error('Not verified'));
   } else {
-    const { signature, currentEpoch } = await blockchain.verifyCheckin(req.session.account.address);
-    jsonResponse(res, null, {
-      verification: signature,
-      currentEpoch
-    });
+    const signature = await blockchain.verifyCheckin(req.session.account.address);
+    jsonResponse(res, null, signature);
   }
 });
 
