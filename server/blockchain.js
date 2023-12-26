@@ -241,7 +241,7 @@ const verifyCheckin = async (address) => {
   );
   const messageHash = ethers.utils.keccak256(message);
   const signature = await walletSP.signMessage(ethers.utils.arrayify(messageHash));
-  return signature;
+  return { signature, currentEpoch };
 }
 
 const spSign = (message) => walletSP.signMessage(message);

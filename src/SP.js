@@ -122,9 +122,9 @@ function SP(props) {
     const biconomyProvider = biconomy.getEthersProvider();
     const signer = biconomy.getSignerByAddress(address);
     const contract = new ethers.Contract(contractSP, abiSP, signer);
-    const verification = await getCheckinVerification();
+    const { verification, currentEpoch } = await getCheckinVerification();
     // Create your target method signature.
-    const { data } = await contract.populateTransaction.checkin(verification);
+    const { data } = await contract.populateTransaction.checkin(currentEpoch, '0x0000000000000000000000000000000000000000', verification);
 
     const gasLimit = await biconomyProvider.estimateGas({
       to: contractSP,
