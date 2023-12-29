@@ -189,8 +189,8 @@ function SP(props) {
     } catch (e) {
       console.log(e);
       setError(e.message);
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const sendPin = async () => {
@@ -243,13 +243,14 @@ function SP(props) {
       } else {
         setError(message);
       }
+      setLoading(false);
     }
   }, [writeError]);
 
   useEffect(() => {
     if (writeSuccess && writeData) {
+      setLoading(false);
       setCheckinSuccess(true);
-      console.log(writeData, writeData.hash);
       const txid = writeData.hash;
       const existingLocal = window.localStorage.getItem('sp-transactions');
       window.localStorage && window.localStorage.setItem('sp-transactions', `${new Date().getTime()}:${txid}${existingLocal ? `,${existingLocal}` : ''}`);
