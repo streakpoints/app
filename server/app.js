@@ -400,6 +400,11 @@ app.get('/-/api/account', async (req, res) => {
   }
 });
 
+(async () => {
+  const x = await blockchain.getENS('0xd9242f1b2ABb9e13bFb52547683E775Cc4B4a7F3');
+  console.log(x);
+})();
+
 app.post('/-/api/login', async (req, res) => {
   const { address, signature } = req.body;
   try {
@@ -422,7 +427,9 @@ app.post('/-/api/login', async (req, res) => {
     await pool.query(
       `
       INSERT INTO account (address, verified) VALUES (?,?)
-      ON DUPLICATE KEY UPDATE login_time = NOW()
+      ON DUPLICATE KEY UPDATE
+        login_time = NOW(),
+        verified = IF(verified = FALSE, VALUES(verified), verified)
       `,
       [ address, verified ]
     );
