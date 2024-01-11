@@ -213,21 +213,23 @@ function CheckinButton(props) {
         </Button>
         <br />
         <br />
-        <div className="toggle-switch">
-          <input
-            checked={gasless}
-            onChange={() => setGasless(!gasless)}
-            type="checkbox"
-            className="toggle-switch-checkbox"
-            name="gaslessSwitch"
-            id="gaslessSwitch"
-          />
-          <label className="toggle-switch-label" htmlFor="gaslessSwitch">
-            <span className="toggle-switch-inner" />
-            <span className="toggle-switch-switch" />
-          </label>
+        <div style={{ display: 'none' }}>
+          <div className="toggle-switch">
+            <input
+              checked={gasless}
+              onChange={() => setGasless(!gasless)}
+              type="checkbox"
+              className="toggle-switch-checkbox"
+              name="gaslessSwitch"
+              id="gaslessSwitch"
+            />
+            <label className="toggle-switch-label" htmlFor="gaslessSwitch">
+              <span className="toggle-switch-inner" />
+              <span className="toggle-switch-switch" />
+            </label>
+          </div>
+          <label className="toggle-switch-text" for="gaslessSwitch">Gasless ⚠️ beta </label>
         </div>
-        <label className="toggle-switch-text" for="gaslessSwitch">Gasless ⚠️ beta </label>
       </div>
       <br />
       <br />
