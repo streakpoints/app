@@ -244,14 +244,12 @@ function SP(props) {
         <br />
         {
           account && (
-            <div>
+            <div style={{ wordWrap: 'break-word' }}>
               <h3>Bonus Points - Referral link</h3>
               <p>Refer someone new who checks in and you&apos;ll both earn 1 extra point.</p>
-              <pre>
-                <a href={`https://streakpoints.com/?ref=${account.address}`}>
-                  https://streakpoints.com/?ref={account.address}
-                </a>
-              </pre>
+              <a href={`https://streakpoints.com/?ref=${account.address}`}>
+                https://streakpoints.com/?ref={account.address}
+              </a>
               <br />
               <br />
             </div>
