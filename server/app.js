@@ -542,7 +542,7 @@ app.get('/-/api/checkin', async (req, res) => {
     WHERE create_time > DATE_SUB(NOW(), INTERVAL 2 DAY)
     GROUP BY address
     ORDER BY create_time DESC
-    LIMIT 20
+    LIMIT 40
     `
   );
 
