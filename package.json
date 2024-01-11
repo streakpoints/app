@@ -5,7 +5,7 @@
   "dependencies": {
     "@biconomy/mexa": "^2.0.38",
     "@metamask/detect-provider": "^1.2.0",
-    "@metamask/eth-sig-util": "^4.0.0",
+    "@metamask/eth-sig-util": "^4.0.1",
     "@rainbow-me/rainbowkit": "^1.2.1",
     "@standard-crypto/farcaster-js": "^5.6.0",
     "@testing-library/jest-dom": "^5.16.2",
@@ -22,6 +22,7 @@
     "cors": "^2.8.5",
     "d3": "^5.16.0",
     "dotenv": "^16.0.0",
+    "ethereumjs-util": "^7.1.5",
     "express": "^4.17.2",
     "express-session": "^1.17.2",
     "form-data": "^4.0.0",

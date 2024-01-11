@@ -5,8 +5,10 @@ import '@rainbow-me/rainbowkit/styles.css';
 import PhoneInput, { isPossiblePhoneNumber } from 'react-phone-number-input';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useAccount, useSignMessage, useContractWrite } from 'wagmi';
+import { signTypedData, SignTypedDataVersion } from '@metamask/eth-sig-util';
 import Countdown from 'react-countdown';
 import { ethers } from 'ethers';
+import { toBuffer } from 'ethereumjs-util';
 
 import { getBiconomy } from './biconomy';
 import {
@@ -76,41 +78,47 @@ function CheckinButton(props) {
   };
 
   const finishGaslessCheckin = async (userSignature) => {
-    const provider = new ethers.providers.JsonRpcProvider('https://polygon-rpc.com/', {
-      name: 'Matic',
-      chainId: 137,
-    });
-    const wallet = new ethers.Wallet(`0x000000000000000000000000${address.slice(2)}`)
-    const biconomy = await getBiconomy(provider, 'zGd2BlLtI.682b7032-2bf1-431f-8c11-e657299c1300');
-    const biconomyProvider = biconomy.getEthersProvider();
-    const contract = new ethers.Contract(spGameContract, spGameABI, wallet);
-    const {
-      verification: verifierSignature,
-    } = await getCheckinVerification();
-    // Create your target method signature.
-    const { data } = await contract.populateTransaction.checkinBySignature(
-      epochStr,
-      address,
-      referrer || '',
-      userSignature,
-      verifierSignature,
-    );
 
     try {
-      const gasLimit = await biconomyProvider.estimateGas({
+      const biconomy = await window.biconomySingleton;
+      const biconomyProvider = biconomy.getEthersProvider();
+
+      const wallet = new ethers.Wallet(`0x000000000000000000000000${address.slice(2)}`)
+      const sender = await wallet.getAddress();
+      const {
+        verification: verifierSignature,
+      } = await getCheckinVerification();
+      const contractInterface = new ethers.utils.Interface(spGameABI);
+      const functionSignature = contractInterface.encodeFunctionData('checkinBySignature', [
+        epochStr,
+        address,
+        referrer || '',
+        userSignature,
+        verifierSignature,
+      ]);
+
+      const signedTx = await wallet.signTransaction({
         to: spGameContract,
-        from: address,
-        data,
+        data: functionSignature,
+        from: sender,
       });
 
-      const txParams = {
-        data,
-        to: spGameContract,
-        from: address,
-        gasLimit: gasLimit.toNumber() + 100000,
-        signatureType: 'EIP712_SIGN',
-      };
-      const txid = await biconomyProvider.send('eth_sendTransaction', [txParams]);
+      const forwardData = await biconomy.getForwardRequestAndMessageToSign(signedTx);
+      const signature = signTypedData({
+        privateKey: toBuffer(wallet.privateKey),
+        data: forwardData.eip712Format,
+        version: SignTypedDataVersion.V3,
+      });
+      const txid = await biconomyProvider.send('eth_sendRawTransaction', [
+        {
+          signature,
+          gasLimit: (Number(forwardData.request.txGas) + 500000).toString(),
+          forwardRequest: forwardData.request,
+          rawTransaction: signedTx,
+          signatureType: biconomy.EIP712_SIGN,
+        },
+      ]);
+
       onSuccess(txid);
       setLoading(false);
     } catch (e) {
@@ -200,6 +208,13 @@ function CheckinButton(props) {
     }
   }, [checkinSignSuccess, checkinSignData]);
 
+  useEffect(() => {
+    const provider = new ethers.providers.JsonRpcProvider('https://polygon-rpc.com/', {
+      name: 'Matic',
+      chainId: 137,
+    });
+    window.biconomySingleton = getBiconomy(provider, 'zGd2BlLtI.682b7032-2bf1-431f-8c11-e657299c1300');
+  }, [])
 
   return (
     <div style={{ position: 'relative' }}>
@@ -213,7 +228,7 @@ function CheckinButton(props) {
         </Button>
         <br />
         <br />
-        <div style={{ display: 'none' }}>
+        <div>
           <div className="toggle-switch">
             <input
               checked={gasless}
