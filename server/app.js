@@ -414,7 +414,7 @@ app.post('/-/api/login', async (req, res) => {
     }
     let verified = false;
     try {
-      const name = await getENS(address);
+      const name = await blockchain.getENS(address);
       verified = !!name;
     } catch (e) {
       // skip
@@ -532,6 +532,7 @@ app.get('/-/api/checkin', async (req, res) => {
     `
     SELECT address, MAX(id) AS id, MAX(create_time) AS create_time
     FROM checkin
+    WHERE create_time > DATE_SUB(NOW(), INTERVAL 2 DAY)
     GROUP BY address
     ORDER BY create_time DESC
     LIMIT 20
@@ -839,12 +840,13 @@ const scanCheckins = async () => {
       values.push(c.streak);
       values.push(c.points);
       values.push(c.coins);
+      values.push(c.referrer);
       values.push(c.txid);
     });
     await pool.query(
       `
-      INSERT INTO checkin (address, epoch, streak, points, sp, txid)
-      VALUES ${`,(?,?,?,?,?,?)`.repeat(checkins.length).slice(1)}
+      INSERT INTO checkin (address, epoch, streak, points, sp, referrer, txid)
+      VALUES ${`,(?,?,?,?,?,?,?)`.repeat(checkins.length).slice(1)}
       ON DUPLICATE KEY UPDATE txid = VALUES(txid)
       `,
       values

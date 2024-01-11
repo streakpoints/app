@@ -183,7 +183,6 @@ const getCheckins = async (lastBlock) => {
     } catch (e) {
       console.log(e);
     }
-    console.log('>>>>> REFERRER', l.args.referrer);
     return {
       address: l.args.user,
       referrer: l.args.referrer,

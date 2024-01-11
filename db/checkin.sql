@@ -5,6 +5,7 @@ CREATE TABLE `checkin` (
     `streak`                        int NOT NULL,
     `points`                        int NOT NULL,
     `sp`                            int DEFAULT NULL,
+    `referrer`                      varchar(42) NOT NULL,
     `txid`                          varchar(66) NOT NULL,
     `create_time`                   datetime DEFAULT CURRENT_TIMESTAMP,
 
