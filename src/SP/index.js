@@ -245,23 +245,10 @@ function SP(props) {
         <br />
         <br />
         {
-          account && (
-            <div style={{ wordWrap: 'break-word' }}>
-              <h3>Bonus Points - Referral link</h3>
-              <p>Refer someone new who checks in and you&apos;ll both earn 1 extra point.</p>
-              <a href={`https://streakpoints.com/?ref=${account.address}`}>
-                https://streakpoints.com/?ref={account.address}
-              </a>
-              <br />
-              <br />
-            </div>
-          )
-        }
-        {
           localTransactions.length > 0 && (
             <div style={{ position: 'relative', marginBottom: '2em' }}>
               <h3>
-                Your last checkin
+                Your last transaction
                 <Button
                   secondary style={{ zoom: '.5', top: '-.2em', right: '-.5em', position: 'relative' }}
                   onClick={() => {
@@ -279,6 +266,19 @@ function SP(props) {
                   </div>
                 ))
               }
+            </div>
+          )
+        }
+        {
+          account && (
+            <div style={{ wordWrap: 'break-word' }}>
+              <h3>Bonus Points - Referral link</h3>
+              <p>Refer someone new who checks in and you&apos;ll both earn 1 extra point.</p>
+              <a href={`https://streakpoints.com/?ref=${account.address}`}>
+                https://streakpoints.com/?ref={account.address}
+              </a>
+              <br />
+              <br />
             </div>
           )
         }

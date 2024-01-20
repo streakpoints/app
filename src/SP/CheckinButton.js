@@ -124,7 +124,7 @@ function CheckinButton(props) {
     } catch (e) {
       console.log(e);
       if (e.message.indexOf('Already checked in') > -1) {
-        setError('Already checked in for today');
+        setError('Already streaked today');
       } else {
         setError(e.message);
       }
@@ -180,7 +180,7 @@ function CheckinButton(props) {
     if (writeError) {
       const message = writeError.message.split('Contract Call:')[0];
       if (message.indexOf('Already checked in') > -1) {
-        setError('Already checked in for today');
+        setError('Already streaked today');
       } else {
         setError(message.split('\n')[0]);
       }
@@ -199,6 +199,7 @@ function CheckinButton(props) {
   useEffect(() => {
     if (writeSuccess && writeData) {
       onSuccess(writeData.hash);
+      setLoading(false);
     }
   }, [writeSuccess, writeData]);
 
