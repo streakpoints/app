@@ -30,6 +30,7 @@ const redisClient = redis.createClient(
 );
 
 // Initialize the DB
+console.log(process.env.MYSQL_HOST);
 const pool = mysql.createPool({
   host: process.env.MYSQL_HOST,
   port: process.env.MYSQL_PORT,
@@ -400,11 +401,6 @@ app.get('/-/api/account', async (req, res) => {
   }
 });
 
-(async () => {
-  const x = await blockchain.getENS('0xd9242f1b2ABb9e13bFb52547683E775Cc4B4a7F3');
-  console.log(x);
-})();
-
 app.post('/-/api/login', async (req, res) => {
   const { address, signature } = req.body;
   try {
@@ -534,6 +530,74 @@ app.get('/-/api/checkin/verify', async (req, res) => {
   }
 });
 
+app.get('/-/api/top-points', async (req, res) => {
+  const [checkinIDResults] = await pool.query(
+    `
+    SELECT address, MAX(id) AS id, MAX(points) AS points, MAX(create_time) AS create_time
+    FROM checkin
+    WHERE create_time > DATE_SUB(NOW(), INTERVAL 2 DAY)
+    GROUP BY address
+    ORDER BY points DESC
+    LIMIT 10
+    `
+  );
+
+  const checkinIDs = checkinIDResults.map(checkin => checkin.id);
+
+  if (checkinIDs.length == 0) {
+    jsonResponse(res, null, []);
+    return;
+  }
+  const [checkins] = await pool.query(
+    `
+    SELECT
+      checkin.*,
+      ens.name,
+      UNIX_TIMESTAMP(NOW()) - UNIX_TIMESTAMP(create_time) AS elapsed
+    FROM checkin
+    LEFT JOIN ens ON checkin.address = ens.address
+    WHERE checkin.id IN (${`,?`.repeat(checkinIDs.length).slice(1)})
+    ORDER BY checkin.points DESC
+    `,
+    checkinIDs
+  );
+  jsonResponse(res, null, checkins);
+});
+
+app.get('/-/api/top-streaks', async (req, res) => {
+  const [checkinIDResults] = await pool.query(
+    `
+    SELECT address, MAX(id) AS id, MAX(streak) AS streak, MAX(create_time) AS create_time
+    FROM checkin
+    WHERE create_time > DATE_SUB(NOW(), INTERVAL 2 DAY)
+    GROUP BY address
+    ORDER BY streak DESC
+    LIMIT 10
+    `
+  );
+
+  const checkinIDs = checkinIDResults.map(checkin => checkin.id);
+
+  if (checkinIDs.length == 0) {
+    jsonResponse(res, null, []);
+    return;
+  }
+  const [checkins] = await pool.query(
+    `
+    SELECT
+      checkin.*,
+      ens.name,
+      UNIX_TIMESTAMP(NOW()) - UNIX_TIMESTAMP(create_time) AS elapsed
+    FROM checkin
+    LEFT JOIN ens ON checkin.address = ens.address
+    WHERE checkin.id IN (${`,?`.repeat(checkinIDs.length).slice(1)})
+    ORDER BY checkin.streak DESC
+    `,
+    checkinIDs
+  );
+  jsonResponse(res, null, checkins);
+});
+
 app.get('/-/api/checkin', async (req, res) => {
   const [checkinIDResults] = await pool.query(
     `
@@ -542,7 +606,7 @@ app.get('/-/api/checkin', async (req, res) => {
     WHERE create_time > DATE_SUB(NOW(), INTERVAL 2 DAY)
     GROUP BY address
     ORDER BY create_time DESC
-    LIMIT 40
+    LIMIT 10
     `
   );
 

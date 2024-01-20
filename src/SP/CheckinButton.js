@@ -223,7 +223,7 @@ function CheckinButton(props) {
           style={{ fontSize: '1.5em' }}
           onClick={checkin} disabled={loading || writeLoading || checkinSignLoading}
         >
-          Checkin
+          Streak
           {loading && <i className='fas fa-spinner fa-spin' style={{ marginLeft: '.5em' }} />}
         </Button>
         <br />

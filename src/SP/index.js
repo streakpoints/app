@@ -22,6 +22,8 @@ import {
   login,
   logout,
   getCheckins,
+  getTopStreaks,
+  getTopPoints,
 } from '../data';
 
 const two = (number) => (number / 100).toFixed(2).split('.')[1];
@@ -41,7 +43,7 @@ const renderer = ({
   } else {
     text = `${two(hours)}:${two(minutes)}:${two(seconds)}`;
   }
-  text += ' left to checkin today';
+  text += ' left to streak today';
   return (
     <div
       style={{
@@ -73,6 +75,8 @@ function SP(props) {
   const [phonePin, setPhonePin] = useState('');
   const [view, setView] = useState(VIEWS.NONE);
   const [checkins, setCheckins] = useState([]);
+  const [streaks, setStreaks] = useState([]);
+  const [points, setPoints] = useState([]);
   const [rerender, setRerender] = useState(0);
   const epochEndTime = new Date((Math.floor((new Date().getTime() / 86_400_000)) + 1) * 86_400_000);
 
@@ -98,7 +102,11 @@ function SP(props) {
       setAccount(account);
     }
     const checkins = await getCheckins();
+    const streaks = await getTopStreaks();
+    const points = await getTopPoints();
     setCheckins(checkins);
+    setStreaks(streaks);
+    setPoints(points);
     setInit(true);
   }
 
@@ -158,8 +166,7 @@ function SP(props) {
 
   const onCheckin = (txid) => {
     window.alert('Checkin submitted to the blockchain for verification');
-    const existingLocal = window.localStorage.getItem('sp-transactions');
-    window.localStorage && window.localStorage.setItem('sp-transactions', `${new Date().getTime()}:${txid}${existingLocal ? `,${existingLocal}` : ''}`);
+    window.localStorage && window.localStorage.setItem('sp-transactions', `${new Date().getTime()}:${txid}`);
     setRerender(rerender + 1);
   }
 
@@ -218,15 +225,10 @@ function SP(props) {
         <div style={{ fontSize: '24px', fontWeight: 'bold', marginTop: '1em' }}>
           💫&nbsp;&nbsp;StreakPoints
         </div>
-        <p>
-          Let&apos;s create the most valuable place on the internet.
-        </p>
-        <p>
-          Each day you checkin here, you earn 1 point.
-          One million $SP is distributed daily to people based on their points.
-          If you miss a checkin, you lose ½ your points.
-          Try not to do that. GLHF!
-        </p>
+          <p>Streak together until we create the most valuable place on the internet. And then let&apos;s Streak some more.</p>
+          <p>StreakPoints is a daily global game anyone with a <a href="https://metamask.io/" target="_blank">crypto wallet</a> can play. Just tap that <b>STREAK</b> button once a day before time expires.</p>
+          <p>A daily prize of 1,000,000 $SP is split among folks with streaks longer than a day. Think of the daily prize as a big ass pizza. The key to getting a bigger slice is to maximize your on-chain points.</p>
+          <p>You earn 1 on-chain point whenever you extend your streak and 1 on-chain point whenever you refer a first-time streaker. If you break your streak and miss a day, you lose ½ your points. Try not to do that.</p>
       </div>
       <div style={{ maxWidth: '500px', margin: '0 auto', padding: '0 1em 2em 1em' }}>
         {
@@ -259,7 +261,7 @@ function SP(props) {
           localTransactions.length > 0 && (
             <div style={{ position: 'relative', marginBottom: '2em' }}>
               <h3>
-                Checkins from this device
+                Your last checkin
                 <Button
                   secondary style={{ zoom: '.5', top: '-.2em', right: '-.5em', position: 'relative' }}
                   onClick={() => {
@@ -280,7 +282,63 @@ function SP(props) {
             </div>
           )
         }
-        <h3>Recent checkins</h3>
+        <h3>Longest streaks</h3>
+        <STable>
+          <thead>
+            <tr>
+              <th>account</th>
+              <th>streak</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              streaks.map(c => (
+                <tr key={`${c.address}-${c.epoch}`}>
+                  <td>
+                    <a href={`https://polygonscan.com/token/${spTokenContract}?a=${c.address}`} target='_blank'>{c.name || (`${c.address.substr(0, 6)}...${c.address.substr(-4)}`)}</a>
+                    <br />
+                    <span style={{ fontWeight: 'bold', fontSize: '.75em', color: '#666' }}>{getTimeAgo(c.elapsed)}</span>
+                    {
+                      c.sp > 0 && (
+                        <span style={{ fontWeight: 'bold', fontSize: '.75em', color: '#666', marginLeft: '.5em' }}>+{c.sp} $SP</span>
+                      )
+                    }
+                  </td>
+                  <td>{c.streak} day{c.streak === 1 ? '' : 's'}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </STable>
+        <h3>Highest points</h3>
+        <STable>
+          <thead>
+            <tr>
+              <th>account</th>
+              <th>points</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              points.map(c => (
+                <tr key={`${c.address}-${c.epoch}`}>
+                  <td>
+                    <a href={`https://polygonscan.com/token/${spTokenContract}?a=${c.address}`} target='_blank'>{c.name || (`${c.address.substr(0, 6)}...${c.address.substr(-4)}`)}</a>
+                    <br />
+                    <span style={{ fontWeight: 'bold', fontSize: '.75em', color: '#666' }}>{getTimeAgo(c.elapsed)}</span>
+                    {
+                      c.sp > 0 && (
+                        <span style={{ fontWeight: 'bold', fontSize: '.75em', color: '#666', marginLeft: '.5em' }}>+{c.sp} $SP</span>
+                      )
+                    }
+                  </td>
+                  <td>{c.points}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </STable>
+        <h3>Recent activity</h3>
         <STable>
           <thead>
             <tr>

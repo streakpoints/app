@@ -84,6 +84,16 @@ export const getCheckins = async params => {
   return response.data.results;
 }
 
+export const getTopStreaks = async params => {
+  const response = await axios.get(`${BASE_URL}/top-streaks`, { params });
+  return response.data.results;
+}
+
+export const getTopPoints = async params => {
+  const response = await axios.get(`${BASE_URL}/top-points`, { params });
+  return response.data.results;
+}
+
 export const sendPhonePin = async params => {
   try {
     const response = await axios.post(`${BASE_URL}/account/verify-start`, params);
