@@ -262,7 +262,7 @@ function SP(props) {
           </thead>
           <tbody>
             <tr>
-              <td><b>players</b></td>
+              <td><b>streakers</b></td>
               {stats.map(s => (<td>{s.addresses}</td>))}
             </tr>
             <tr>
