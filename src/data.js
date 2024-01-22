@@ -94,6 +94,11 @@ export const getTopPoints = async params => {
   return response.data.results;
 }
 
+export const getEpochStats = async params => {
+  const response = await axios.get(`${BASE_URL}/epoch-stats`, { params });
+  return response.data.results;
+}
+
 export const sendPhonePin = async params => {
   try {
     const response = await axios.post(`${BASE_URL}/account/verify-start`, params);

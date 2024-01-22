@@ -530,6 +530,27 @@ app.get('/-/api/checkin/verify', async (req, res) => {
   }
 });
 
+app.get('/-/api/epoch-stats', async (req, res) => {
+  const [epochResult] = await pool.query(
+    `
+    SELECT MAX(epoch) AS epoch FROM checkin
+    `
+  );
+  const maxEpoch = epochResult[0].epoch || 0;
+  const [epochResults] = await pool.query(
+    `
+    SELECT epoch, COUNT(*) AS addresses, SUM(points) AS points
+    FROM checkin
+    WHERE epoch <= ? AND epoch >= ?
+    GROUP BY epoch
+    ORDER BY epoch ASC
+    `,
+    [ maxEpoch, maxEpoch - 6 ]
+  );
+
+  jsonResponse(res, null, epochResults);
+});
+
 app.get('/-/api/top-points', async (req, res) => {
   const [epochResult] = await pool.query(
     `

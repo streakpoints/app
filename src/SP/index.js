@@ -24,6 +24,7 @@ import {
   getCheckins,
   getTopStreaks,
   getTopPoints,
+  getEpochStats,
 } from '../data';
 
 const two = (number) => (number / 100).toFixed(2).split('.')[1];
@@ -74,6 +75,7 @@ function SP(props) {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [phonePin, setPhonePin] = useState('');
   const [view, setView] = useState(VIEWS.NONE);
+  const [stats, setStats] = useState([]);
   const [checkins, setCheckins] = useState([]);
   const [streaks, setStreaks] = useState([]);
   const [points, setPoints] = useState([]);
@@ -101,13 +103,15 @@ function SP(props) {
     if (account) {
       setAccount(account);
     }
-    const checkins = await getCheckins();
-    const streaks = await getTopStreaks();
-    const points = await getTopPoints();
-    setCheckins(checkins);
-    setStreaks(streaks);
-    setPoints(points);
     setInit(true);
+    const stats = await getEpochStats();
+    setStats(stats);
+    const checkins = await getCheckins();
+    setCheckins(checkins);
+    const streaks = await getTopStreaks();
+    setStreaks(streaks);
+    const points = await getTopPoints();
+    setPoints(points);
   }
 
   const logoutServer = async () => {
@@ -242,6 +246,31 @@ function SP(props) {
         <div style={{ textAlign: 'center' }}>
           <CheckinButton onSuccess={onCheckin} onError={onCheckinError} account={account} />
         </div>
+        <h3>7-day summary</h3>
+        <STable>
+          <thead>
+            <tr>
+              <th></th>
+              <th>-6d</th>
+              <th>-5d</th>
+              <th>-4d</th>
+              <th>-3d</th>
+              <th>-2d</th>
+              <th>-1d</th>
+              <th>today</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><b>players</b></td>
+              {stats.map(s => (<td>{s.addresses}</td>))}
+            </tr>
+            <tr>
+              <td><b>points</b></td>
+              {stats.map(s => (<td>{s.points}</td>))}
+            </tr>
+          </tbody>
+        </STable>
         <br />
         <br />
         {
