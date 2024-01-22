@@ -531,7 +531,7 @@ app.get('/-/api/checkin/verify', async (req, res) => {
 });
 
 app.get('/-/api/top-points', async (req, res) => {
-   const [epochResult] = await pool.query(
+  const [epochResult] = await pool.query(
     `
     SELECT MAX(epoch) AS epoch FROM checkin
     `
@@ -571,18 +571,24 @@ app.get('/-/api/top-points', async (req, res) => {
 });
 
 app.get('/-/api/top-streaks', async (req, res) => {
-  const [checkinIDResults] = await pool.query(
+  const [epochResult] = await pool.query(
     `
-    SELECT address, MAX(id) AS id, MAX(streak) AS streak, MAX(create_time) AS create_time
-    FROM checkin
-    WHERE create_time > DATE_SUB(NOW(), INTERVAL 2 DAY)
-    GROUP BY address
-    ORDER BY streak DESC
-    LIMIT 10
+    SELECT MAX(epoch) AS epoch FROM checkin
     `
   );
+  const maxEpoch = epochResult[0].epoch || 0;
+  const [checkinIDResults] = await pool.query(
+    `
+    SELECT address, MAX(id) AS id, MAX(streak) AS streak
+    FROM checkin
+    WHERE epoch = ? OR epoch = ?
+    GROUP BY address
+    ORDER BY streak DESC
+    `,
+    [ maxEpoch, maxEpoch - 1 ]
+  );
 
-  const checkinIDs = checkinIDResults.map(checkin => checkin.id);
+  const checkinIDs = checkinIDResults.slice(0, 10).map(checkin => checkin.id);
 
   if (checkinIDs.length == 0) {
     jsonResponse(res, null, []);
