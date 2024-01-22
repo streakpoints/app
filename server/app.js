@@ -531,18 +531,24 @@ app.get('/-/api/checkin/verify', async (req, res) => {
 });
 
 app.get('/-/api/top-points', async (req, res) => {
-  const [checkinIDResults] = await pool.query(
+   const [epochResult] = await pool.query(
     `
-    SELECT address, MAX(id) AS id, MAX(points) AS points, MAX(create_time) AS create_time
-    FROM checkin
-    WHERE create_time > DATE_SUB(NOW(), INTERVAL 2 DAY)
-    GROUP BY address
-    ORDER BY points DESC
-    LIMIT 10
+    SELECT MAX(epoch) AS epoch FROM checkin
     `
   );
+  const maxEpoch = epochResult[0].epoch || 0;
+  const [checkinIDResults] = await pool.query(
+    `
+    SELECT address, MAX(id) AS id, MAX(points) AS points
+    FROM checkin
+    WHERE epoch = ? OR epoch = ?
+    GROUP BY address
+    ORDER BY points DESC
+    `,
+    [ maxEpoch, maxEpoch - 1 ]
+  );
 
-  const checkinIDs = checkinIDResults.map(checkin => checkin.id);
+  const checkinIDs = checkinIDResults.slice(0, 10).map(checkin => checkin.id);
 
   if (checkinIDs.length == 0) {
     jsonResponse(res, null, []);
