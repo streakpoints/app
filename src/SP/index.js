@@ -272,8 +272,8 @@ function SP(props) {
         {
           account && (
             <div style={{ wordWrap: 'break-word' }}>
-              <h3>Bonus Points - Referral link</h3>
-              <p>Refer someone new who checks in and you&apos;ll both earn 1 extra point.</p>
+              <h3>Your referral link</h3>
+              <p>Refer a new streaker and you&apos;ll both earn 1 extra point.</p>
               <a href={`https://streakpoints.com/?ref=${account.address}`}>
                 https://streakpoints.com/?ref={account.address}
               </a>
@@ -282,6 +282,36 @@ function SP(props) {
             </div>
           )
         }
+        <h3>Recent streakers</h3>
+        <STable>
+          <thead>
+            <tr>
+              <th>account</th>
+              <th>streak</th>
+              <th>points</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              checkins.map(c => (
+                <tr key={`${c.address}-${c.epoch}`}>
+                  <td>
+                    <a href={`https://polygonscan.com/token/${spTokenContract}?a=${c.address}`} target='_blank'>{c.name || (`${c.address.substr(0, 6)}...${c.address.substr(-4)}`)}</a>
+                    <br />
+                    <span style={{ fontWeight: 'bold', fontSize: '.75em', color: '#666' }}>{getTimeAgo(c.elapsed)}</span>
+                    {
+                      c.sp > 0 && (
+                        <span style={{ fontWeight: 'bold', fontSize: '.75em', color: '#666', marginLeft: '.5em' }}>+{c.sp} $SP</span>
+                      )
+                    }
+                  </td>
+                  <td>{c.streak} day{c.streak === 1 ? '' : 's'}</td>
+                  <td>{c.points}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </STable>
         <h3>Longest streaks</h3>
         <STable>
           <thead>
@@ -332,36 +362,6 @@ function SP(props) {
                       )
                     }
                   </td>
-                  <td>{c.points}</td>
-                </tr>
-              ))
-            }
-          </tbody>
-        </STable>
-        <h3>Recent activity</h3>
-        <STable>
-          <thead>
-            <tr>
-              <th>account</th>
-              <th>streak</th>
-              <th>points</th>
-            </tr>
-          </thead>
-          <tbody>
-            {
-              checkins.map(c => (
-                <tr key={`${c.address}-${c.epoch}`}>
-                  <td>
-                    <a href={`https://polygonscan.com/token/${spTokenContract}?a=${c.address}`} target='_blank'>{c.name || (`${c.address.substr(0, 6)}...${c.address.substr(-4)}`)}</a>
-                    <br />
-                    <span style={{ fontWeight: 'bold', fontSize: '.75em', color: '#666' }}>{getTimeAgo(c.elapsed)}</span>
-                    {
-                      c.sp > 0 && (
-                        <span style={{ fontWeight: 'bold', fontSize: '.75em', color: '#666', marginLeft: '.5em' }}>+{c.sp} $SP</span>
-                      )
-                    }
-                  </td>
-                  <td>{c.streak} day{c.streak === 1 ? '' : 's'}</td>
                   <td>{c.points}</td>
                 </tr>
               ))
