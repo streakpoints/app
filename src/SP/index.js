@@ -413,7 +413,7 @@ function SP(props) {
           view === VIEWS.FOLLOW_REMINDER && (
             <div>
               <h2>Follow us on X</h2>
-              <p>Follow <a href="https://x.com/StreakPoints">@StreakPoints</a> for the latest updates and information</p>
+              <p>Follow <a href="https://x.com/StreakPoints" target="_blank">@StreakPoints</a> for the latest updates and information</p>
               <br />
               <Button
                 onClick={() => {
