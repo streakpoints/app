@@ -64,6 +64,7 @@ const VIEWS = {
   LOGIN: 1,
   SEND_PHONE_PIN: 2,
   CONFIRM_PHONE_PIN: 3,
+  FOLLOW_REMINDER: 4,
 };
 
 function SP(props) {
@@ -148,7 +149,7 @@ function SP(props) {
     }
     try {
       await confirmPhonePin({ phoneNumber, phonePin });
-      setView(VIEWS.NONE);
+      setView(VIEWS.FOLLOW_REMINDER);
     } catch (e) {
       setError(e.message);
     }
@@ -162,7 +163,7 @@ function SP(props) {
       login({ address, signature: loginSignData })
       .then(account => {
         setAccount(account);
-        setView(VIEWS.NONE);
+        setView(account && account.verified ? VIEWS.FOLLOW_REMINDER : VIEWS.NONE);
       })
       .catch(e => setError(e.message));
     }
@@ -408,6 +409,23 @@ function SP(props) {
           setPhoneNumber('');
         }}
       >
+        {
+          view === VIEWS.FOLLOW_REMINDER && (
+            <div>
+              <h2>Follow us on X</h2>
+              <p>Follow <a href="https://x.com/StreakPoints">@StreakPoints</a> for the latest updates and information</p>
+              <br />
+              <Button
+                onClick={() => {
+                  window.open('https://x.com/intent/follow?screen_name=StreakPoints', '_blank');
+                  setView(VIEWS.NONE);
+                }}
+               >
+                Follow
+              </Button>
+            </div>
+          )
+        }
         {
           view === VIEWS.SEND_PHONE_PIN && (
             <div>
