@@ -148,7 +148,8 @@ function SP(props) {
       return;
     }
     try {
-      await confirmPhonePin({ phoneNumber, phonePin });
+      const acct = await confirmPhonePin({ phoneNumber, phonePin });
+      setAccount(acct);
       setView(VIEWS.FOLLOW_REMINDER);
     } catch (e) {
       setError(e.message);
