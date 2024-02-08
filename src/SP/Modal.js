@@ -67,9 +67,8 @@ export const SModalContainer = styled.div`
   top: 128px;
   left: 50%;
   transform: translateX(-50%);
-  background-color: white;
-  border-radius: 12px;
-  border: 1px solid gray;
+  background-color: black;
+  border-radius: 0px;
   box-shadow: 0 12px 56px rgb(119 118 122 / 25%);
   padding: 1em;
   display: flex;

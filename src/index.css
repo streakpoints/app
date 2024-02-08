@@ -1,12 +1,15 @@
 body {
   margin: 0;
-  font-family: Helvetica, sans-serif;
+  font-family: "VT323", monospace;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: black;
+  color: white;
+  font-size: 1.25em;
 }
 
 input, textarea, button {
-  font-family: Helvetica;
+  font-family: "VT323", monospace;
   font-size: 1em;
 }
 
@@ -43,12 +46,12 @@ body {
 }
 
 a, a:visited, a:hover {
-  color: rgb(29, 155, 240);
+  color: inherit;
 }
 
 select {
   padding: .5em;
-  font-family: Helvetica, sans-serif;
+  font-family: "VT323", monospace;
   border-radius: 12px;
 }
 
@@ -97,7 +100,7 @@ select {
   overflow: hidden;
   cursor: pointer;
   border: 0 solid #bbb;
-  border-radius: 20px;
+  border-radius: 0px;
   margin: 0;
 }
 .toggle-switch-label:focus {
@@ -146,7 +149,7 @@ select {
   content: attr(data-no);
   text-transform: uppercase;
   padding-right: 10px;
-  background-color: #bbb;
+  background-color: #444;
   color: #fff;
   text-align: right;
 }
@@ -160,7 +163,7 @@ select {
   bottom: 0;
   right: 40px;
   border: 0 solid #bbb;
-  border-radius: 20px;
+  border-radius: 0px;
   transition: all 0.3s ease-in 0s;
 }
 .toggle-switch-checkbox:checked + .toggle-switch-label .toggle-switch-inner {

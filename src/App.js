@@ -39,7 +39,7 @@ function App() {
 
     return (
       <WagmiConfig config={wagmiConfig}>
-        <RainbowKitProvider chains={chains}>
+        <RainbowKitProvider chains={chains} theme={darkTheme()}>
           <Router>
             <Switch>
               <Route path='/' component={SP} />

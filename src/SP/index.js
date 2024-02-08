@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import 'react-phone-number-input/style.css';
 import '@rainbow-me/rainbowkit/styles.css';
 import PhoneInput, { isPossiblePhoneNumber } from 'react-phone-number-input';
-import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { ConnectButton, darkTheme } from '@rainbow-me/rainbowkit';
 import {
   useAccount,
   useSignMessage,
@@ -225,16 +225,19 @@ function SP(props) {
   return (
     <div style={{ position: 'relative' }}>
       <div style={{ position: 'absolute', top: '1em', right: '1em' }}>
-        <ConnectButton />
+        <ButtonWrapper>
+          <ConnectButton />
+        </ButtonWrapper>
       </div>
       <div style={{ padding: '2em 1em', maxWidth: '500px', margin: '0 auto' }}>
         <div style={{ fontSize: '24px', fontWeight: 'bold', marginTop: '1em' }}>
           💫&nbsp;&nbsp;StreakPoints
         </div>
-          <p>Streak together until we create the most valuable place on the internet. And then let&apos;s Streak some more.</p>
-          <p>StreakPoints is a daily global game anyone with a <a href="https://metamask.io/" target="_blank">crypto wallet</a> can play. Just tap that <b>STREAK</b> button once a day before time expires.</p>
-          <p>A daily prize of 1,000,000 $SP is split among folks with streaks longer than a day. Think of the daily prize as a big ass pizza. The key to getting a bigger slice is to maximize your on-chain points.</p>
-          <p>You earn 1 on-chain point whenever you extend your streak and 1 on-chain point whenever you refer a first-time streaker. If you break your streak and miss a day, you lose ½ your points. Try not to do that.</p>
+          <p>What if everyone with a <a href="https://metamask.io/" target="_blank">crypto wallet</a> came here daily?</p>
+          <p>StreakPoints is a game of building streaks. To play, show up once per day and click the <b>STREAK</b> below before time expires.</p>
+          <p>Each day you extend your streak, you accumulate 1 on-chain point. You can earn an additional point for each new streaker you refer. More ways to earn more points are coming soon.</p>
+          <p>A daily prize of 1,000,000 $SP is split among active streakers based on their points. If the daily prize is a large pizza, the key to getting a bigger slice is your on-chain points.</p>
+          <p><b>Most importantly:</b> If you break your streak, you lose half points for each day missed. Do not break your streak!</p>
       </div>
       <div style={{ maxWidth: '500px', margin: '0 auto', padding: '0 1em 2em 1em' }}>
         {
@@ -504,16 +507,23 @@ const STable = styled.table`
 
 const Button = styled.button`
   cursor: pointer;
-  background-color: ${props => props.secondary ? '#666' : 'rgb(14, 118, 253)'};
+  background-color: ${props => props.secondary ? '#666' : '#2F855A'};
   color: white;
   font-size: 1em;
   font-weight: bold;
-  border-radius: 12px;
+  border-radius: 0px;
   border: 0;
   padding: .75em 1em;
   &:disabled {
     background-color: rgb(14, 118, 253, .6);
     cursor: not-allowed;
+  }
+`;
+
+const ButtonWrapper = styled.div`
+  * {
+    font-family: "VT323", monospace !important;
+    border-radius: 0 !important;
   }
 `;
 

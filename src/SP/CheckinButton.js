@@ -244,7 +244,7 @@ function CheckinButton(props) {
               <span className="toggle-switch-switch" />
             </label>
           </div>
-          <label className="toggle-switch-text" for="gaslessSwitch">Gasless ⚠️ beta </label>
+          <label className="toggle-switch-text" for="gaslessSwitch">Gasless beta </label>
         </div>
       </div>
       <br />
@@ -258,12 +258,10 @@ function CheckinButton(props) {
 
 const Button = styled.button`
   cursor: pointer;
-  background-color: ${props => props.secondary ? '#666' : 'rgb(14, 118, 253)'};
+  background-color: ${props => props.secondary ? '#666' : '#2F855A'};
   color: white;
   font-size: 1em;
   font-weight: bold;
-  font-family: Trebuchet MS, sans-serif;
-  border-radius: 500px;
   text-transform: uppercase;
   border: 0;
   padding: .5em 1em;
