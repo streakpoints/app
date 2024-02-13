@@ -113,7 +113,16 @@ function Home(props) {
       </div>
       {
         epochDiff === 0 ? (
-          <h1 style={{ textAlign: 'center' }}>💫💫 Streaked 💫💫</h1>
+          <div
+            style={{
+              textAlign: 'center',
+              fontSize: '32px',
+              padding: '1em 0',
+              fontWeight: 'bold'
+            }}
+          >
+            💫 You Streaked 💫
+          </div>
         ) : (
           <div>
             {

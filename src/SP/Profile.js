@@ -49,7 +49,7 @@ function Profile() {
         <LineChart
           data={profile.checkins.map(c => ({
             date: new Date(c.create_time).toLocaleDateString('en-US', options),
-            value: c.points
+            points: c.points
           }))}
           margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
         >
@@ -57,7 +57,7 @@ function Profile() {
           <XAxis dataKey="date" />
           <YAxis />
           <Tooltip />
-          <Line type="monotone" dataKey="value" stroke="#8884d8" />
+          <Line type="monotone" dataKey="points" stroke="#8884d8" />
         </LineChart>
       </ResponsiveContainer>
       <br />
