@@ -69,6 +69,7 @@ function SP(props) {
     if (account) {
       setAccount(account);
     }
+    setInit(true);
   }
 
   const logoutServer = async () => {
