@@ -99,6 +99,16 @@ export const getEpochStats = async params => {
   return response.data.results;
 }
 
+export const getLastCheckin = async params => {
+  const response = await axios.get(`${BASE_URL}/last-checkin`, { params });
+  return response.data.results;
+}
+
+export const getProfile = async params => {
+  const response = await axios.get(`${BASE_URL}/profile`, { params });
+  return response.data.results;
+}
+
 export const sendPhonePin = async params => {
   try {
     const response = await axios.post(`${BASE_URL}/account/verify-start`, params);

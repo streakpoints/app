@@ -122,7 +122,7 @@ function CheckinButton(props) {
       onSuccess(txid);
       setLoading(false);
     } catch (e) {
-      console.log(e);
+      window.console.log(e);
       if (e.message.indexOf('Already checked in') > -1) {
         setError('Already streaked today');
       } else {
@@ -163,7 +163,7 @@ function CheckinButton(props) {
         });
       }
     } catch (e) {
-      console.log(e);
+      window.console.log(e);
       setError(e.message);
       setLoading(false);
     }

@@ -5,7 +5,6 @@ export const getBiconomySDK = async () => {
 
 export const getBiconomy = async (provider, apiKey): Promise<any> => {
   const Biconomy = await getBiconomySDK();
-
   return new Promise((resolve, reject) => {
     const biconomy = new Biconomy(provider, {
       apiKey,

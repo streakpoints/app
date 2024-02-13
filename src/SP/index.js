@@ -5,15 +5,22 @@ import '@rainbow-me/rainbowkit/styles.css';
 import PhoneInput, { isPossiblePhoneNumber } from 'react-phone-number-input';
 import { ConnectButton, darkTheme } from '@rainbow-me/rainbowkit';
 import {
+  Link,
+  Route,
+  Routes,
+} from 'react-router-dom';
+import {
+  useLocation,
+} from 'react-router';
+import {
   useAccount,
   useSignMessage,
 } from 'wagmi';
-import Countdown from 'react-countdown';
 import { Modal } from './Modal';
-import CheckinButton from './CheckinButton';
-import {
-  spTokenContract,
-} from './constants';
+import Home from './Home';
+import Rules from './Rules';
+import Profile from './Profile';
+import Leaderboard from './Leaderboard';
 import {
   getAccount,
   getLoginNonce,
@@ -21,43 +28,7 @@ import {
   confirmPhonePin,
   login,
   logout,
-  getCheckins,
-  getTopStreaks,
-  getTopPoints,
-  getEpochStats,
 } from '../data';
-
-const two = (number) => (number / 100).toFixed(2).split('.')[1];
-
-const renderer = ({
-  days, hours, minutes, seconds, completed,
-}) => {
-  let text = null;
-  if (completed) {
-    // Render a completed state
-    text = 'Day complete';
-  }
-  if (days === 1) {
-    text = '1 day';
-  } else if (days > 1) {
-    text = `${days} days`;
-  } else {
-    text = `${two(hours)}:${two(minutes)}:${two(seconds)}`;
-  }
-  text += ' left to streak today';
-  return (
-    <div
-      style={{
-        fontWeight: 'bold',
-        color: 'red',
-        textAlign: 'center',
-        padding: '0 0 2em 0',
-      }}
-    >
-      {text}
-    </div>
-  );
-};
 
 const VIEWS = {
   NONE: 0,
@@ -76,14 +47,8 @@ function SP(props) {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [phonePin, setPhonePin] = useState('');
   const [view, setView] = useState(VIEWS.NONE);
-  const [stats, setStats] = useState([]);
-  const [checkins, setCheckins] = useState([]);
-  const [streaks, setStreaks] = useState([]);
-  const [points, setPoints] = useState([]);
-  const [rerender, setRerender] = useState(0);
-  const epochEndTime = new Date((Math.floor((new Date().getTime() / 86_400_000)) + 1) * 86_400_000);
-
-
+  const [lastCheckin, setLastCheckin] = useState(0);
+  const { pathname } = useLocation();
   const {
     address,
     // isConnecting,
@@ -104,15 +69,6 @@ function SP(props) {
     if (account) {
       setAccount(account);
     }
-    setInit(true);
-    const stats = await getEpochStats();
-    setStats(stats);
-    const checkins = await getCheckins();
-    setCheckins(checkins);
-    const streaks = await getTopStreaks();
-    setStreaks(streaks);
-    const points = await getTopPoints();
-    setPoints(points);
   }
 
   const logoutServer = async () => {
@@ -157,7 +113,7 @@ function SP(props) {
     setLoading(false);
   }
 
-  useEffect(() => loadAccount(), [])
+  useEffect(() => loadAccount(), []);
 
   useEffect(() => {
     if (loginSignSuccess && loginSignData) {
@@ -169,12 +125,6 @@ function SP(props) {
       .catch(e => setError(e.message));
     }
   }, [loginSignSuccess, loginSignData]);
-
-  const onCheckin = (txid) => {
-    window.alert('Checkin submitted to the blockchain for verification');
-    window.localStorage && window.localStorage.setItem('sp-transactions', `${new Date().getTime()}:${txid}`);
-    setRerender(rerender + 1);
-  }
 
   const onCheckinError = (errorCode) => {
     if (errorCode === 0) {
@@ -200,208 +150,59 @@ function SP(props) {
     }
   }, [init, account, address, isDisconnected]);
 
-  const getTimeAgo = (elapsed) => {
-    if (elapsed < 60) {
-      return 'just now';
-    } else if (elapsed < 3600) {
-      return `${Math.floor(elapsed / 60)}m ago`;
-    } else if (elapsed < 86400) {
-      return `${Math.floor(elapsed / 3600)}h ago`;
-    } else {
-      return `${Math.floor(elapsed / 86400)}d ago`;
-    }
-  };
-
-  const now = new Date().getTime();
-  const localTransactionData = window.localStorage.getItem('sp-transactions');
-  const localTransactions = localTransactionData ? localTransactionData.split(',').map(ut => {
-    const [time, txid] = ut.split(':');
-    return {
-      elapsed: getTimeAgo(Math.floor((now - time) / 1000)),
-      txid,
-    }
-  }) : [];
-
   return (
     <div style={{ position: 'relative' }}>
       <div style={{ position: 'absolute', top: '1em', right: '1em' }}>
         <ButtonWrapper>
-          <ConnectButton />
+          <ConnectButton accountStatus={{ smallScreen: 'address', largeScreen: 'address' }} />
         </ButtonWrapper>
       </div>
-      <div style={{ padding: '2em 1em', maxWidth: '500px', margin: '0 auto' }}>
-        <div style={{ fontSize: '24px', fontWeight: 'bold', marginTop: '1em' }}>
-          💫&nbsp;&nbsp;StreakPoints
+      <div style={{ padding: '1em 1em', maxWidth: '500px', margin: '0 auto' }}>
+        <div style={{ fontSize: '32px', fontWeight: 'bold', marginTop: '0em' }}>
+          💫&nbsp;StreakPoints
         </div>
-          <p>What if everyone with a <a href="https://metamask.io/" target="_blank">crypto wallet</a> came here daily?</p>
-          <p>StreakPoints is a game of building streaks. To play, show up once per day and click the <b>STREAK</b> below before time expires.</p>
-          <p>Each day you extend your streak, you accumulate 1 on-chain point. You can earn an additional point for each new streaker you refer. More ways to earn more points are coming soon.</p>
-          <p>A daily prize of 1,000,000 $SP is split among active streakers based on their points. If the daily prize is a large pizza, the key to getting a bigger slice is your on-chain points.</p>
-          <p><b>Most importantly:</b> If you break your streak, you lose half points for each day missed. Do not break your streak!</p>
       </div>
       <div style={{ maxWidth: '500px', margin: '0 auto', padding: '0 1em 2em 1em' }}>
-        {
-          epochEndTime && (
-            <Countdown
-              date={epochEndTime.getTime()}
-              renderer={renderer}
-            />
-          )
-        }
-        <div style={{ textAlign: 'center' }}>
-          <CheckinButton onSuccess={onCheckin} onError={onCheckinError} account={account} />
+        <div>
+          <SLink
+            isSelected={pathname === "/"}
+            to="/"
+          >
+            Home
+          </SLink>
+          &nbsp;&nbsp;
+          <SLink
+            isSelected={pathname === "/leaderboard"}
+            to="/leaderboard"
+          >
+            Leaderboard
+          </SLink>
+          &nbsp;&nbsp;
+          <SLink
+            isSelected={pathname === "/rules"}
+            to="/rules"
+          >
+            Rules
+          </SLink>
+          &nbsp;&nbsp;
+          {
+            account && (
+              <SLink
+                isSelected={pathname === `/${account.address}`}
+                to={`/${account.address}`}
+              >
+                Profile
+              </SLink>
+            )
+          }
         </div>
-        <h3>7-day summary</h3>
-        <STable>
-          <thead>
-            <tr>
-              <th></th>
-              <th>-6d</th>
-              <th>-5d</th>
-              <th>-4d</th>
-              <th>-3d</th>
-              <th>-2d</th>
-              <th>-1d</th>
-              <th>today</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><b>streakers</b></td>
-              {stats.map(s => (<td>{s.addresses}</td>))}
-            </tr>
-            <tr>
-              <td><b>points</b></td>
-              {stats.map(s => (<td>{s.points}</td>))}
-            </tr>
-          </tbody>
-        </STable>
         <br />
-        <br />
-        {
-          localTransactions.length > 0 && (
-            <div style={{ position: 'relative', marginBottom: '2em' }}>
-              <h3>
-                Your last transaction
-                <Button
-                  secondary style={{ zoom: '.5', top: '-.2em', right: '-.5em', position: 'relative' }}
-                  onClick={() => {
-                    window.localStorage.removeItem('sp-transactions');
-                    setRerender(rerender + 1);
-                  }}
-                >
-                  clear
-                </Button>
-              </h3>
-              {
-                localTransactions.map(ut => (
-                  <div key={ut.txid} style={{ marginBottom: '1em' }}>
-                    <a target='_blank' href={`https://polygonscan.com/tx/${ut.txid}`}>{ut.elapsed}</a>
-                  </div>
-                ))
-              }
-            </div>
-          )
-        }
-        {
-          account && (
-            <div style={{ wordWrap: 'break-word' }}>
-              <h3>Your referral link</h3>
-              <p>Refer a new streaker and you&apos;ll both earn 1 extra point.</p>
-              <a href={`https://streakpoints.com/?ref=${account.address}`}>
-                https://streakpoints.com/?ref={account.address}
-              </a>
-              <br />
-              <br />
-            </div>
-          )
-        }
-        <h3>Recent streakers</h3>
-        <STable>
-          <thead>
-            <tr>
-              <th>account</th>
-              <th>streak</th>
-              <th>points</th>
-            </tr>
-          </thead>
-          <tbody>
-            {
-              checkins.map(c => (
-                <tr key={`${c.address}-${c.epoch}`}>
-                  <td>
-                    <a href={`https://polygonscan.com/token/${spTokenContract}?a=${c.address}`} target='_blank'>{c.name || (`${c.address.substr(0, 6)}...${c.address.substr(-4)}`)}</a>
-                    <br />
-                    <span style={{ fontWeight: 'bold', fontSize: '.75em', color: '#666' }}>{getTimeAgo(c.elapsed)}</span>
-                    {
-                      c.sp > 0 && (
-                        <span style={{ fontWeight: 'bold', fontSize: '.75em', color: '#666', marginLeft: '.5em' }}>+{c.sp} $SP</span>
-                      )
-                    }
-                  </td>
-                  <td>{c.streak} day{c.streak === 1 ? '' : 's'}</td>
-                  <td>{c.points}</td>
-                </tr>
-              ))
-            }
-          </tbody>
-        </STable>
-        <h3>Longest streaks</h3>
-        <STable>
-          <thead>
-            <tr>
-              <th>account</th>
-              <th>streak</th>
-            </tr>
-          </thead>
-          <tbody>
-            {
-              streaks.map(c => (
-                <tr key={`${c.address}-${c.epoch}`}>
-                  <td>
-                    <a href={`https://polygonscan.com/token/${spTokenContract}?a=${c.address}`} target='_blank'>{c.name || (`${c.address.substr(0, 6)}...${c.address.substr(-4)}`)}</a>
-                    <br />
-                    <span style={{ fontWeight: 'bold', fontSize: '.75em', color: '#666' }}>{getTimeAgo(c.elapsed)}</span>
-                    {
-                      c.sp > 0 && (
-                        <span style={{ fontWeight: 'bold', fontSize: '.75em', color: '#666', marginLeft: '.5em' }}>+{c.sp} $SP</span>
-                      )
-                    }
-                  </td>
-                  <td>{c.streak} day{c.streak === 1 ? '' : 's'}</td>
-                </tr>
-              ))
-            }
-          </tbody>
-        </STable>
-        <h3>Highest points</h3>
-        <STable>
-          <thead>
-            <tr>
-              <th>account</th>
-              <th>points</th>
-            </tr>
-          </thead>
-          <tbody>
-            {
-              points.map(c => (
-                <tr key={`${c.address}-${c.epoch}`}>
-                  <td>
-                    <a href={`https://polygonscan.com/token/${spTokenContract}?a=${c.address}`} target='_blank'>{c.name || (`${c.address.substr(0, 6)}...${c.address.substr(-4)}`)}</a>
-                    <br />
-                    <span style={{ fontWeight: 'bold', fontSize: '.75em', color: '#666' }}>{getTimeAgo(c.elapsed)}</span>
-                    {
-                      c.sp > 0 && (
-                        <span style={{ fontWeight: 'bold', fontSize: '.75em', color: '#666', marginLeft: '.5em' }}>+{c.sp} $SP</span>
-                      )
-                    }
-                  </td>
-                  <td>{c.points}</td>
-                </tr>
-              ))
-            }
-          </tbody>
-        </STable>
+        <Routes>
+          <Route path='/leaderboard' element={<Leaderboard />} />
+          <Route path='/rules' element={<Rules />} />
+          <Route path='/:address' element={<Profile />} />
+          <Route path='/' element={<Home onCheckinError={onCheckinError} account={account} />} />
+        </Routes>
       </div>
       <Modal
         presented={view !== VIEWS.NONE}
@@ -494,17 +295,6 @@ function SP(props) {
   );
 }
 
-const STable = styled.table`
-  width: 100%;
-  text-align: right;
-  & td {
-    padding-bottom: .25em;
-  }
-  & tr > *:first-child {
-    text-align: left;
-  }
-`;
-
 const Button = styled.button`
   cursor: pointer;
   background-color: ${props => props.secondary ? '#666' : '#2F855A'};
@@ -525,6 +315,11 @@ const ButtonWrapper = styled.div`
     font-family: "VT323", monospace !important;
     border-radius: 0 !important;
   }
+`;
+
+const SLink = styled(Link)`
+  font-size: 24px;
+  text-decoration: ${({ isSelected }) => isSelected ? 'none' : 'underline'};
 `;
 
 export default SP;

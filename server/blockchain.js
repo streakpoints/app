@@ -162,6 +162,29 @@ const getMints = async (chainID, lastBlock) => {
   return mints;
 }
 
+const getAccountData = async (address) => {
+  const provider = getProvider(137);
+  const contract = new ethers.Contract(contractSP, abiSP, provider);
+
+  const pendingPoints = parseInt((await contract.getAccountPoints(address)).toString());
+
+  const lastCheckinEpoch = parseInt((await contract.getAccountLastCheckinEpoch(address)).toString());
+  const currentStreak = parseInt((await contract.getAccountCurrentStreak(address)).toString());
+  const longestStreak = parseInt((await contract.getAccountLongestStreak(address)).toString());
+
+  const currentEpoch = parseInt((await contract.getCurrentEpoch()).toString());
+  const checkinPoints = parseInt((await contract.getAccountLastCheckinPoints(address)).toString());
+
+  return {
+    pendingPoints,
+    lastCheckinEpoch,
+    currentStreak,
+    longestStreak,
+    currentEpoch,
+    checkinPoints,
+  }
+};
+
 const getCheckins = async (lastBlock) => {
   const chainID = 137;
   const provider = getProvider(chainID);
@@ -279,4 +302,5 @@ module.exports = {
   getCheckins,
   spSign,
   getSPMined,
+  getAccountData,
 };

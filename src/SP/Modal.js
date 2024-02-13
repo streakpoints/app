@@ -79,10 +79,12 @@ export const SModalContainer = styled.div`
     box-sizing: border-box;
     top: auto;
     bottom: 0;
+    border-top: 1px solid #fff;
     border-bottom-left-radius: unset;
     border-bottom-right-radius: unset;
   }
   @media (min-width: ${breakpoint}) {
+    border: 1px solid #fff;
     width: ${({ modalWidth }) => modalWidth};
   }
   @media (max-height: 500px) {
