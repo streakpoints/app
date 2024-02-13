@@ -154,7 +154,7 @@ function SP(props) {
     <div style={{ position: 'relative' }}>
       <div style={{ position: 'absolute', top: '1em', right: '1em' }}>
         <ButtonWrapper>
-          <ConnectButton accountStatus={{ smallScreen: 'address', largeScreen: 'address' }} />
+          <ConnectButton label="Connect" accountStatus={{ smallScreen: 'address', largeScreen: 'address' }} />
         </ButtonWrapper>
       </div>
       <div style={{ padding: '1em 1em', maxWidth: '500px', margin: '0 auto' }}>
