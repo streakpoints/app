@@ -648,10 +648,5 @@ const getSPMined = async () => {
 };
 
 const CRON_MIN = '* * * * *';
-const CRON_5MIN = '*/5 * * * *';
-// schedule.scheduleJob(CRON_MIN, scanCasts);
-// schedule.scheduleJob(CRON_MIN, scanChains);
-// schedule.scheduleJob(CRON_5MIN, genFeeds);
 schedule.scheduleJob(CRON_MIN, scanCheckins);
-// genFeeds();
 scanCheckins();
