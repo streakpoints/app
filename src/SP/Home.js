@@ -73,8 +73,10 @@ function Home(props) {
       }).then((lastCheckinEpoch) => {
         setLastCheckin(lastCheckinEpoch)
       });
+    } else {
+      setLastCheckin(0);
     }
-  }, [account]);
+  }, [account, address]);
 
   const loadStats = async () => {
     const stats = await getEpochStats();
