@@ -67,11 +67,11 @@ function Home(props) {
   } = useAccount();
 
   useEffect(() => {
-    if (account) {
+    if (account && address) {
       getLastCheckin({
         address: account.address
       }).then((lastCheckinEpoch) => {
-        setLastCheckin(lastCheckinEpoch)
+        setLastCheckin(lastCheckinEpoch);
       });
     } else {
       setLastCheckin(0);
