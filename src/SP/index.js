@@ -48,7 +48,19 @@ function SP(props) {
   const [phonePin, setPhonePin] = useState('');
   const [view, setView] = useState(VIEWS.NONE);
   const [lastCheckin, setLastCheckin] = useState(0);
+  const [edition, setEdition] = useState(336000000);
   const { pathname } = useLocation();
+
+  useEffect(() => {
+    setTimeout(() => {
+      if (edition + 1 === 336000400) {
+        setEdition(336000000);
+      } else {
+        setEdition(edition + 1);
+      }
+    }, 18 * 60 * 1_000);
+  }, [edition]);
+
   const {
     address,
     // isConnecting,
@@ -153,16 +165,22 @@ function SP(props) {
 
   return (
     <div style={{ position: 'relative' }}>
-      <div style={{ position: 'absolute', top: '1em', right: '1em' }}>
+      <div style={{ position: 'absolute', top: '1em', right: 'calc(2em + 40px)' }}>
         <ButtonWrapper>
           <ConnectButton label="Connect" accountStatus={{ smallScreen: 'address', largeScreen: 'address' }} />
         </ButtonWrapper>
       </div>
+      <div style={{ position: 'absolute', top: '1em', right: '1em' }}>
+        <iframe src={`https://generator.artblocks.io/0xa7d8d9ef8d8ce8992df33d8b8cf4aebabd5bd270/${edition}`} style={{ border: '0', height: '38px', width: '38px', border: '1px solid #1A1B1F', }} />
+      </div>
       <div style={{ padding: '1em 1em', maxWidth: '500px', margin: '0 auto' }}>
-        <div style={{ fontSize: '32px', fontWeight: 'bold', marginTop: '0em' }}>
-          💫&nbsp;StreakPoints
+        <div style={{ fontSize: '32px', fontWeight: 'bold', marginTop: '0em', textAlign: 'center' }}>
+          <Name>💫</Name>
+          <br />
+          <div>StreakPoints</div>
         </div>
       </div>
+      <br />
       <div style={{ maxWidth: '500px', margin: '0 auto', padding: '0 1em 2em 1em' }}>
         <div>
           <SLink
@@ -292,6 +310,13 @@ function SP(props) {
           )
         }
       </Modal>
+      <div style={{ padding: '1em', textAlign: 'center' }}>
+        {'Now playing '}
+        <a target="_blank" href={`https://opensea.io/assets/ethereum/0xa7d8d9ef8d8ce8992df33d8b8cf4aebabd5bd270/${edition}`}>Polychrome Music #{edition - 336000000}</a>
+        <br />
+        {'Created by '}
+        <a target="_blank" href="https://opensea.io/newrafael/created">newrafael</a>
+      </div>
     </div>
   );
 }
@@ -321,6 +346,16 @@ const ButtonWrapper = styled.div`
 const SLink = styled(Link)`
   font-size: 24px;
   text-decoration: ${({ isSelected }) => isSelected ? 'none' : 'underline'};
+`;
+
+const Name = styled.div`
+  font-size: 70px;
+  width: 80px;
+  display: inline-block;
+  border: 0px solid white;
+  padding: .2em;
+  height: 80px;
+  margin-top: 1em;
 `;
 
 export default SP;
