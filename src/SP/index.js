@@ -317,6 +317,9 @@ function SP(props) {
         <br />
         {'Created by '}
         <a target="_blank" href="https://opensea.io/newrafael/created">newrafael</a>
+        <br />
+        {'Licensed under '}
+        <a target="_blank" href="https://creativecommons.org/licenses/by-nc-nd/4.0/">Creative Commons</a>
       </div>
     </div>
   );
