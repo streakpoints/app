@@ -48,7 +48,8 @@ function SP(props) {
   const [phonePin, setPhonePin] = useState('');
   const [view, setView] = useState(VIEWS.NONE);
   const [lastCheckin, setLastCheckin] = useState(0);
-  const [edition, setEdition] = useState(336000000);
+  const interval = Math.floor(new Date().getTime() / 1000 / (9 * 60)) % 400;
+  const [edition, setEdition] = useState(336000000 + interval);
   const { pathname } = useLocation();
 
   useEffect(() => {
@@ -58,7 +59,7 @@ function SP(props) {
       } else {
         setEdition(edition + 1);
       }
-    }, 18 * 60 * 1_000);
+    }, 9 * 60 * 1_000);
   }, [edition]);
 
   const {
