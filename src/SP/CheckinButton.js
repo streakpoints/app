@@ -210,7 +210,7 @@ function CheckinButton(props) {
   }, [checkinSignSuccess, checkinSignData]);
 
   useEffect(() => {
-    const provider = new ethers.providers.JsonRpcProvider('https://polygon-rpc.com/', {
+    const provider = new ethers.providers.JsonRpcProvider('https://polygon-bor-rpc.publicnode.com', {
       name: 'Matic',
       chainId: 137,
     });
