@@ -15,7 +15,12 @@ const request = require('request-promise');
 const bcrypt = require('bcrypt');
 const { formatPhoneNumberIntl, isValidPhoneNumber } = require('react-phone-number-input');
 
+const StandardMerkleTree = require("@openzeppelin/merkle-tree").StandardMerkleTree;
+const tree = require('./tree.js');
+
 dotenv.config({ path: path.join(__dirname, '.env') });
+
+const merkleTree = StandardMerkleTree.load(tree);
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
@@ -514,6 +519,23 @@ app.get('/-/api/last-checkin', async (req, res) => {
   jsonResponse(res, null, lastUserCheckin[0].epoch);
 });
 
+app.get('/warped/:address', async (req, res) => {
+  const address = req.params['address'];
+  let proof = null;
+  let amount = null;
+  for (const [i, v] of merkleTree.entries()) {
+    if (v[0] === address) {
+      amount = v[1];
+      proof = merkleTree.getProof(i);
+    }
+  }
+  jsonResponse(res, null, {
+    address,
+    amount,
+    proof,
+  });
+});
+
 app.get('/-/api/status', async (req, res) => {
   jsonResponse(res, null, 'OK');
 });
@@ -648,5 +670,5 @@ const getSPMined = async () => {
 };
 
 const CRON_MIN = '* * * * *';
-schedule.scheduleJob(CRON_MIN, scanCheckins);
-scanCheckins();
+// schedule.scheduleJob(CRON_MIN, scanCheckins);
+// scanCheckins();
