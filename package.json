@@ -53,6 +53,7 @@
     "twitter-api-v2": "^1.10.0",
     "twitter-text": "^3.1.0",
     "typescript": "^5.0.3",
+    "uuid": "^11.0.3",
     "viem": "^1.4.2",
     "wagmi": "^1.4.7",
     "web-vitals": "^2.1.4"

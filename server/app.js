@@ -13,6 +13,7 @@ const path = require('path');
 const schedule = require('node-schedule');
 const request = require('request-promise');
 const bcrypt = require('bcrypt');
+const uuidv4 = require('uuid').v4;
 const { formatPhoneNumberIntl, isValidPhoneNumber } = require('react-phone-number-input');
 
 const StandardMerkleTree = require("@openzeppelin/merkle-tree").StandardMerkleTree;
@@ -535,6 +536,71 @@ app.get('/warped/:address', async (req, res) => {
     amount,
     proof,
   });
+});
+
+// GET route to fetch a key
+app.get("/key", async (req, res) => {
+  try {
+    const id = uuidv4();
+    const body = JSON.stringify({
+      keyName: id.toString(),
+      permissions: {
+        endpoints: {
+          pinning: {
+            pinFileToIPFS: true
+          },
+        },
+      },
+      maxUses: 1,
+    });
+    const keyRes = await fetch(
+      "https://api.pinata.cloud/users/generateApiKey",
+      {
+        method: "POST",
+        body: body,
+        headers: {
+          accept: "application/json",
+          "content-type": "application/json",
+          authorization: `Bearer ${process.env.PINATA_JWT}`,
+        },
+      },
+    );
+    const keyResJson = await keyRes.json();
+    console.log(keyResJson);
+    jsonResponse(res, null, {
+      pinata_api_key: keyResJson.pinata_api_key,
+      JWT: keyResJson.JWT,
+    });
+  } catch (error) {
+    jsonResponse(res, error);
+  }
+});
+
+// PUT route to revoke the key
+app.put("/key", async (req, res) => {
+  const keyId = req.query.keyId;
+  const keyData = JSON.stringify({
+    apiKey: keyId
+  });
+  try {
+    const keyDelete = await fetch(
+      "https://api.pinata.cloud/users/revokeApiKey",
+      {
+        method: "PUT",
+        body: keyData,
+        headers: {
+          accept: "application/json",
+          "content-type": "application/json",
+          authorization: `Bearer ${process.env.PINATA_JWT}`,
+        },
+      },
+    );
+    const keyDeleteRes = await keyDelete.json();
+    jsonResponse(res, null, keyDeleteRes);
+  } catch (error) {
+    console.log(error);
+    jsonResponse(res, { text: "Error Deleting API Key" });
+  }
 });
 
 app.get('/-/api/status', async (req, res) => {
