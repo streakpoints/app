@@ -92,6 +92,7 @@ app.use(cors({
     'http://localhost:3000',
     'https://app.cent.dev',
     'https://app.cent.co',
+    'https://*.ngrok.app'
   ],
   optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
 }));
