@@ -14,6 +14,7 @@ const schedule = require('node-schedule');
 const request = require('request-promise');
 const bcrypt = require('bcrypt');
 const uuidv4 = require('uuid').v4;
+const fetch = require('node-fetch');
 const { formatPhoneNumberIntl, isValidPhoneNumber } = require('react-phone-number-input');
 
 const StandardMerkleTree = require("@openzeppelin/merkle-tree").StandardMerkleTree;
@@ -566,7 +567,6 @@ app.get("/key", async (req, res) => {
       },
     );
     const keyResJson = await keyRes.json();
-    console.log(keyResJson);
     jsonResponse(res, null, {
       pinata_api_key: keyResJson.pinata_api_key,
       JWT: keyResJson.JWT,
