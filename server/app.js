@@ -19,10 +19,12 @@ const { formatPhoneNumberIntl, isValidPhoneNumber } = require('react-phone-numbe
 
 const StandardMerkleTree = require("@openzeppelin/merkle-tree").StandardMerkleTree;
 const tree = require('./tree.js');
+const qTree = require('./tree-quotient.js');
 
 dotenv.config({ path: path.join(__dirname, '.env') });
 
 const merkleTree = StandardMerkleTree.load(tree);
+const qMerkleTree = StandardMerkleTree.load(qTree);
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
@@ -530,6 +532,23 @@ app.get('/warped/:address', async (req, res) => {
     if (v[0] === address) {
       amount = v[1];
       proof = merkleTree.getProof(i);
+    }
+  }
+  jsonResponse(res, null, {
+    address,
+    amount,
+    proof,
+  });
+});
+
+app.get('/quotient/:address', async (req, res) => {
+  const address = req.params['address'];
+  let proof = null;
+  let amount = null;
+  for (const [i, v] of qMerkleTree.entries()) {
+    if (v[0] === address) {
+      amount = v[1];
+      proof = qMerkleTree.getProof(i);
     }
   }
   jsonResponse(res, null, {
