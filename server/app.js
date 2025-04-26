@@ -542,20 +542,24 @@ app.get('/warped/:address', async (req, res) => {
 });
 
 app.get('/quotient/:address', async (req, res) => {
-  const address = req.params['address'];
-  let proof = null;
-  let amount = null;
-  for (const [i, v] of qMerkleTree.entries()) {
-    if (v[0] === address) {
-      amount = v[1];
-      proof = qMerkleTree.getProof(i);
+  try {
+    const address = ethers.utils.getAddress(req.params['address']);
+    let proof = null;
+    let amount = null;
+    for (const [i, v] of qMerkleTree.entries()) {
+      if (v[0] === address) {
+        amount = v[1];
+        proof = qMerkleTree.getProof(i);
+      }
     }
+    jsonResponse(res, null, {
+      address,
+      amount,
+      proof,
+    });
+  } catch (e) {
+    jsonResponse(res, new Error('Invalid address'), null);
   }
-  jsonResponse(res, null, {
-    address,
-    amount,
-    proof,
-  });
 });
 
 // GET route to fetch a key
